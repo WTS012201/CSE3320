@@ -3,6 +3,7 @@
 //  Lab 1
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -27,20 +28,29 @@
 //  However, when I compile it runs just fine. I just redefined it above with the same enum values from dirent.h
 //  because the squiggles were bothering me in case that was confusing.
 
-struct list{char* fName;};
+struct list{
+  char* fName;
+  int size;
+  //struct tm* date;
+};
 
 typedef struct list list;
 typedef struct dirent dirent;
 
-list* insert_file(list* arr, int idx, char* fName){
-  if(strlen(fName) > NAME_MAX){
-    fprintf(stderr, "File name excedes limit of %d chars: %d chars.\n", NAME_MAX, strlen(fName));
+list* insert_file(list* arr, int idx, dirent *de){
+  if(strlen(de->d_name) > NAME_MAX){
+    fprintf(stderr, "File name excedes limit of %d chars: %d chars.\n", NAME_MAX, strlen(de->d_name));
     exit(EXIT_FAILURE);
   }
   
   list* temp = malloc(sizeof(list));
-  temp->fName = (char*)malloc(sizeof(char)*strlen(fName));
-  strcpy(temp->fName, fName);
+  struct stat st;
+
+  stat(de->d_name, &st);
+  temp->fName = (char*)malloc(sizeof(char)*strlen(de->d_name));
+  strcpy(temp->fName, de->d_name);
+  temp->size = st.st_size;
+  //temp->date = NULL;
   arr[idx] = *temp;
 
   return arr;
@@ -50,13 +60,16 @@ void display_time(){
   time_t t = time( NULL );
   
   printf( "Time: %s\n", ctime( &t ));
-  printf("-----------------------------------------------" );
+  printf("-----------------------------------------" );
 }
 
 void display_dirs(DIR* d, dirent* de){
   char cwd[NAME_MAX];
-  d = opendir( "." );
   int c = 0;
+  if((d = opendir( "." )) == NULL){
+    fprintf(stderr, "Current working directory could not be opened.\n");
+    exit(EXIT_FAILURE);
+  }
 
   if(getcwd(cwd, sizeof(cwd)) == NULL){
     fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
@@ -73,12 +86,15 @@ void display_dirs(DIR* d, dirent* de){
 }
 
 void load_files(list* arr, DIR* d, dirent* de){
-  d = opendir( "." );
   int c = 0;
+  if((d = opendir( "." )) == NULL){
+    fprintf(stderr, "Current working directory could not be opened.\n");
+    exit(EXIT_FAILURE);
+  }
 
   while (de = readdir(d)){                    
     if (de->d_type == DT_REG)
-      insert_file(arr, c++, de->d_name);
+      insert_file(arr, c++, de);
   }
   closedir( d );
 }
@@ -89,7 +105,16 @@ void display_files(list* arr, int amount, int *idx){
   for(; c < (amount + *idx); c++){
     if(arr[c].fName == NULL)
       break;
-    printf( " ( %d File:  %s ) \n", c, arr[c].fName);
+
+    if(arr[c].size < 1000)
+      printf( " ( %d File:  %s \tSize: %.3d Bytes) \n", c, arr[c].fName, arr[c].size);
+    else if(arr[c].size < 1000000)
+      printf( " ( %d File:  %s \tSize: %.3f KiB)\n", c, arr[c].fName, (float)arr[c].size/1000);
+    else if(arr[c].size < 1000000000)
+      printf( " ( %d File:  %s \tSize: %.3f MiB)\n", c, arr[c].fName, (float)arr[c].size/1000000);
+    else
+      printf( " ( %d File:  %s \tSize: %.3f GiB) \n", c, arr[c].fName, (float)arr[c].size/1000000000);
+      
   }
   printf( "-----------------------------------------\n" );
 }
