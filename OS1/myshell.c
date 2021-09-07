@@ -5,19 +5,25 @@
 #include "file_ops.h"
 
 int main(void) {
+  
   DIR* d;
   dirent* de;
   file_dat* files = malloc(sizeof(file_dat)*FILE_MAX);
   int idx = 0;
   int const num_files = 5;
   bool hide = false;
-  char c;
   char* editor = (char*)malloc(sizeof(char)*strlen("xdg-open"));
-  
+
   editor = "xdg-open";
+  if(!system(editor)){
+    fprintf(stderr, "\nCould not find an editor.\n");
+    exit(EXIT_FAILURE);
+  }
+
   load_files(files, d, de);
-  
+
   while(true){
+    fflush(stdout);
     system("clear");
     display_time();
     display_dirs(d, de);
@@ -25,12 +31,12 @@ int main(void) {
     if(!hide) display_options();
 
     printf("Enter Operation: ");
-    switch(c = toupper(getchar())){
+    switch(toupper(getchar())){
       case 'E':
         edit_file(files, editor);
         break;
       case 'R':
-        
+        run_program(files);
         break;
       case 'C':
         

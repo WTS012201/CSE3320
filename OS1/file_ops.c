@@ -5,7 +5,7 @@ file_dat* insert_file(file_dat* arr, int idx, dirent *de){
     fprintf(stderr, "File name excedes limit of %d chars: %d chars.\n", NAME_MAX, strlen(de->d_name));
     exit(EXIT_FAILURE);
   }
-  
+
   file_dat* temp = malloc(sizeof(file_dat));
   struct stat st;
 
@@ -100,6 +100,28 @@ void edit_file(file_dat* arr, char* editor){
 
   if(system(temp)){
     fprintf(stderr, "\nFile could not be opened using %s\n", editor);
-    exit(EXIT_FAILURE);
+    printf("Check if the selected file can be opened with the editor.\n\n");
+    printf("Press enter to continue.");
+    while(getchar() != '\n'){}  getchar();
+  }
+}
+
+void run_program(file_dat* arr){
+  int n;
+  char c;
+
+  printf("Enter file number: ");
+  scanf("%d", &n);
+
+  system("clear");
+  
+  char* temp = (char*)malloc(sizeof(char)*(strlen("./") + strlen(arr[n].fName)));
+  sprintf(temp, "./%s", arr[n].fName);  
+  
+  if(system(temp)){
+    fprintf(stderr, "\nProgram could not be executed.\n");
+    printf("Check if the selected file is executable and permissions.\n\n");
+    printf("Press enter to continue.");
+    while(getchar() != '\n'){}  getchar();
   }
 }
