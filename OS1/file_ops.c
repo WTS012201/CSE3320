@@ -109,26 +109,27 @@ void edit_file(file_dat* arr, char* editor){
 }
 
 void run_program(file_dat* arr){
-  int i, n;
-  char params[FILE_MAX];
+  int n;
+  char* params = (char*)malloc(sizeof(char)*ARGS_MAX);
 
   printf("Enter file number: ");
-  scanf("%d", &n);
-
+  scanf("%d", &n); getchar();
+  
   printf("Arguments (If none press enter): ");
-  while((params[i++] = getchar()) != '\n'){}  getchar();
+  fgets(params, ARGS_MAX, stdin);
 
-  char* in = (char*)malloc(sizeof(char)*(strlen("./ ") + strlen(arr[n].fName) + ARGS_MAX));
-  sprintf(in, "./%s %s", arr[n].fName, params);
-  printf("%s\n", in);
   system("clear");
+
+  char* in = (char*)malloc(sizeof(char)*(strlen("./ ") + strlen(arr[n].fName) + strlen(params)));
+  sprintf(in, "./%s %s", arr[n].fName, params);
 
   if(system(in)){
     fprintf(stderr, "\nProgram could not be executed.\n");
     printf("Check if the selected file is executable and file permissions.\n\n");
     printf("Press enter to continue.");
-    while(getchar() != '\n'){}  getchar();
+    while(getchar() != '\n'){}
   }
-  
+
+  free(params);
   free(in);
 }
