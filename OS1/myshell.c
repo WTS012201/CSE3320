@@ -12,14 +12,13 @@ int main(void) {
   int idx = 0;
   int const num_files = 5;
   bool hide = false;
-  char* editor = (char*)malloc(sizeof(char)*strlen("xdg-open"));
+  char* editor = (char*)malloc(sizeof(char)*strlen("xdg-open"));  //  May want to change this later
 
   editor = "xdg-open";
   if(!system(editor)){
     fprintf(stderr, "\nCould not find an editor.\n");
     exit(EXIT_FAILURE);
   }
-
   load_files(files, d, de);
 
   while(true){

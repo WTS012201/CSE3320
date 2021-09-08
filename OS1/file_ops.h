@@ -6,6 +6,7 @@ typedef enum{
   __DT_DIR = 4,
   __DT_REG = 8,
   NAME_MAX = 2048,
+  ARGS_MAX = 2048
 } defs;
 
 //  For some reason my IDE was saying that DT_REG and DT_DIR were undefined and was giving me squiggles.

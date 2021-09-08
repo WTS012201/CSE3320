@@ -6,15 +6,15 @@ file_dat* insert_file(file_dat* arr, int idx, dirent *de){
     exit(EXIT_FAILURE);
   }
 
-  file_dat* temp = malloc(sizeof(file_dat));
+  file_dat* in = malloc(sizeof(file_dat));
   struct stat st;
 
   stat(de->d_name, &st);
-  temp->fName = (char*)malloc(sizeof(char)*strlen(de->d_name));
-  strcpy(temp->fName, de->d_name);
-  temp->size = st.st_size;
-  temp->date = NULL;
-  arr[idx] = *temp;
+  in->fName = (char*)malloc(sizeof(char)*strlen(de->d_name));
+  strcpy(in->fName, de->d_name);
+  in->size = st.st_size;
+  in->date = NULL;
+  arr[idx] = *in;
 
   return arr;
 }
@@ -84,44 +84,51 @@ void display_files(file_dat* arr, int amount, int *idx){
 
 void display_options(){
   printf("Operation:\tE Edit\n\t\tR Run\n\t\tC Change Directory");
-  printf("\n\t\tS Sort Directory file_dating\n\t\tQ Quit");
+  printf("\n\t\tS Sort Directory file/date\n\t\tQ Quit");
   printf("\n\t\tN Next\n\t\tP Previous\n\t\tH Hide Operations\n");
   printf( "-----------------------------------------\n" );
 }
 
 void edit_file(file_dat* arr, char* editor){
   int n;
-  char* temp = (char*)malloc(sizeof(char)*(NAME_MAX + strlen(editor)));
+  char* in = (char*)malloc(sizeof(char)*(NAME_MAX + strlen(editor)));
 
   printf("Enter file number: ");
   scanf("%d", &n);
-  sprintf(temp, "%s %s", editor, arr[n].fName);
+  sprintf(in, "%s %s", editor, arr[n].fName);
   system("clear");
 
-  if(system(temp)){
+  if(system(in)){
     fprintf(stderr, "\nFile could not be opened using %s\n", editor);
     printf("Check if the selected file can be opened with the editor.\n\n");
     printf("Press enter to continue.");
     while(getchar() != '\n'){}  getchar();
   }
+
+  free(in);
 }
 
 void run_program(file_dat* arr){
-  int n;
-  char c;
+  int i, n;
+  char params[FILE_MAX];
 
   printf("Enter file number: ");
   scanf("%d", &n);
 
+  printf("Arguments (If none press enter): ");
+  while((params[i++] = getchar()) != '\n'){}  getchar();
+
+  char* in = (char*)malloc(sizeof(char)*(strlen("./ ") + strlen(arr[n].fName) + ARGS_MAX));
+  sprintf(in, "./%s %s", arr[n].fName, params);
+  printf("%s\n", in);
   system("clear");
-  
-  char* temp = (char*)malloc(sizeof(char)*(strlen("./") + strlen(arr[n].fName)));
-  sprintf(temp, "./%s", arr[n].fName);  
-  
-  if(system(temp)){
+
+  if(system(in)){
     fprintf(stderr, "\nProgram could not be executed.\n");
-    printf("Check if the selected file is executable and permissions.\n\n");
+    printf("Check if the selected file is executable and file permissions.\n\n");
     printf("Press enter to continue.");
     while(getchar() != '\n'){}  getchar();
   }
+  
+  free(in);
 }
