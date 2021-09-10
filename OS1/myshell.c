@@ -6,7 +6,7 @@
 
 int main(void) {
   
-  DIR* d;
+  DIR* d = opendir(".");
   dirent* de;
   file_dat* files = malloc(sizeof(file_dat)*FILE_MAX);
   int idx = 0;
@@ -19,13 +19,13 @@ int main(void) {
     fprintf(stderr, "\nCould not find an editor.\n");
     exit(EXIT_FAILURE);
   }
-  load_files(files, d, de);
+  load_files(files, d);
 
   while(true){
     fflush(stdout);
     system("clear");
     display_time();
-    display_dirs(d, de);
+    display_dirs(d);
     display_files(files, num_files, &idx);
     if(!hide) display_options();
 
@@ -38,10 +38,11 @@ int main(void) {
         run_program(files);
         break;
       case 'C':
-        
+        //change_dir(d);       
+        //load_files(files, d);
         break;
       case 'S':
-        
+        sort(files);
         break;
       case 'Q':
         system("clear");

@@ -1,3 +1,5 @@
+//  NEED TO HANDLE ERRORS BETTER WITH ERNNO. Check for out of bounds etc...
+// CHANGE DIRENT PARAMS
 #include "file_ops.h"
 
 file_dat* insert_file(file_dat* arr, int idx, dirent *de){
@@ -6,15 +8,15 @@ file_dat* insert_file(file_dat* arr, int idx, dirent *de){
     exit(EXIT_FAILURE);
   }
 
-  file_dat* in = malloc(sizeof(file_dat));
+  file_dat* file = malloc(sizeof(file_dat));
   struct stat st;
 
   stat(de->d_name, &st);
-  in->fName = (char*)malloc(sizeof(char)*strlen(de->d_name));
-  strcpy(in->fName, de->d_name);
-  in->size = st.st_size;
-  in->date = NULL;
-  arr[idx] = *in;
+  file->fName = (char*)malloc(sizeof(char)*strlen(de->d_name));
+  strcpy(file->fName, de->d_name);
+  file->size = st.st_size;
+  file->date = *localtime(&(st.st_mtime));
+  arr[idx] = *file;
 
   return arr;
 }
@@ -26,18 +28,21 @@ void display_time(){
   printf("-----------------------------------------" );
 }
 
-void display_dirs(DIR* d, dirent* de){
+void display_dirs(DIR* d){
   char cwd[NAME_MAX];
   int c = 0;
-  if((d = opendir( "." )) == NULL){
+  dirent* de;
+  
+  if(getcwd(cwd, sizeof(cwd)) == NULL){
     fprintf(stderr, "Current working directory could not be opened.\n");
     exit(EXIT_FAILURE);
   }
 
-  if(getcwd(cwd, sizeof(cwd)) == NULL){
+  if((d = opendir(cwd)) == NULL){
     fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
     exit(EXIT_FAILURE);
   }
+
   printf( "\nCurrent Directory: %s \n", cwd);
 
   while(de = readdir(d)){
@@ -48,10 +53,18 @@ void display_dirs(DIR* d, dirent* de){
   printf( "-----------------------------------------\n" );
 }
 
-void load_files(file_dat* arr, DIR* d, dirent* de){
+void load_files(file_dat* arr, DIR* d){
+  char cwd[NAME_MAX];
   int c = 0;
-  if((d = opendir( "." )) == NULL){
+  dirent* de;
+
+  if(getcwd(cwd, sizeof(cwd)) == NULL){
     fprintf(stderr, "Current working directory could not be opened.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if((d = opendir(cwd)) == NULL){
+    fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -68,16 +81,16 @@ void display_files(file_dat* arr, int amount, int *idx){
   for(; c < (amount + *idx); c++){
     if(arr[c].fName == NULL)
       break;
-
     if(arr[c].size < 1000)
-      printf( " ( %d File:  %s \tSize: %.3d Bytes) \n", c, arr[c].fName, arr[c].size);
+      printf( " ( %d File:  %s | \tSize: %.3d Bytes | ", c, arr[c].fName, arr[c].size);
     else if(arr[c].size < 1000000)
-      printf( " ( %d File:  %s \tSize: %.3f KiB)\n", c, arr[c].fName, (float)arr[c].size/1000);
+      printf( " ( %d File:  %s | \tSize: %.3f KiB | ", c, arr[c].fName, (float)arr[c].size/1000);
     else if(arr[c].size < 1000000000)
-      printf( " ( %d File:  %s \tSize: %.3f MiB)\n", c, arr[c].fName, (float)arr[c].size/1000000);
+      printf( " ( %d File:  %s | \tSize: %.3f MiB | ", c, arr[c].fName, (float)arr[c].size/1000000);
     else
-      printf( " ( %d File:  %s \tSize: %.3f GiB) \n", c, arr[c].fName, (float)arr[c].size/1000000000);
-      
+      printf( " ( %d File:  %s | \tSize: %.3f GiB | ", c, arr[c].fName, (float)arr[c].size/1000000000);
+    printf("\tDate: %d-%d-%d ", arr[c].date.tm_year + 1900, arr[c].date.tm_mon + 1, arr[c].date.tm_mday);
+    printf("%d:%d:%d)\n", arr[c].date.tm_hour, arr[c].date.tm_min, arr[c].date.tm_sec);
   }
   printf( "-----------------------------------------\n" );
 }
@@ -133,3 +146,39 @@ void run_program(file_dat* arr){
   free(params);
   free(in);
 }
+
+int cmp_size(const void* a, const void* b){
+  const file_dat* A = a;
+  const file_dat* B = b;
+
+  return (A->size - B->size);
+}
+
+void sort(file_dat* arr){
+  int c = 0;
+
+  while(arr[c].fName != NULL){ c++;}  //  Since fName is malloced, this is the easiest way to get the size of arr
+
+  qsort(arr, c, sizeof(file_dat), cmp_size);
+}
+/*
+void change_dir(DIR* d){ 
+  int i, n;
+  char cwd[NAME_MAX];
+  dirent* de;
+
+  printf("Enter directory number: ");
+  scanf("%d", &n);
+
+  if(getcwd(cwd, sizeof(cwd)) == NULL){
+    fprintf(stderr, "Current working directory could not be opened.\n");
+    exit(EXIT_FAILURE);
+  }
+  opendir(cwd);
+
+  for(i = 0; i < n; i++)
+    de = readdir(d);
+  closedir(d);
+  d = opendir(de->d_name);
+  closedir(d);
+}*/
