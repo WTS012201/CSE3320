@@ -1,5 +1,3 @@
-//  NEED TO HANDLE ERRORS BETTER WITH ERNNO. Check for out of bounds etc...
-// CHANGE DIRENT PARAMS
 #include "file_ops.h"
 
 file_dat* insert_file(file_dat* arr, int idx, dirent *de){
@@ -33,7 +31,8 @@ void display_dirs(DIR* d, char* dirName){
   dirent* de;
 
   if((d = opendir(".")) == NULL){
-    fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
+    fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
+    fprintf(stderr, "Directory couldn't be opened.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -53,7 +52,8 @@ void load_files(file_dat* arr, DIR* d){
   dirent* de;
 
   if((d = opendir(".")) == NULL){
-    fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
+    fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
+    fprintf(stderr, "Directory couldn't be opened.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -92,11 +92,20 @@ void display_options(){
 }
 
 void edit_file(file_dat* arr, char* editor){
-  int n;
+  int n, c = 0;
   char* in = (char*)malloc(sizeof(char)*(NAME_MAX + strlen(editor)));
 
   printf("Enter file number: ");
-  scanf("%d", &n);
+  scanf("%d", &n); getchar();
+
+  while(arr[c].fName != NULL){ c++;}
+  if(n >= c || n < 0){
+    fprintf(stderr, "Invalid input. File number %d doesn't exist.\n", n);
+    fprintf(stderr, "Press enter to continue.");
+    while(getchar() != '\n'){}
+    return;
+  }
+
   sprintf(in, "%s %s", editor, arr[n].fName);
   system("clear");
 
@@ -111,12 +120,20 @@ void edit_file(file_dat* arr, char* editor){
 }
 
 void run_program(file_dat* arr){
-  int n;
+  int n, c = 0;
   char* params = (char*)malloc(sizeof(char)*ARGS_MAX);
 
   printf("Enter file number: ");
   scanf("%d", &n); getchar();
   
+  while(arr[c].fName != NULL){ c++;}
+  if(n >= c || n < 0){
+    fprintf(stderr, "Invalid input. File number %d doesn't exist.\n", n);
+    fprintf(stderr, "Press enter to continue.");
+    while(getchar() != '\n'){}
+    return;
+  }
+
   printf("Arguments (If none press enter): ");
   fgets(params, ARGS_MAX, stdin);
 
@@ -158,11 +175,18 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
   char* temp;
 
   printf("Enter directory number: ");
-  scanf("%d", &n);
-  
+  scanf("%d", &n);  getchar();
+  system("clear");
+
+  if(n < 0){
+    fprintf(stderr, "Invalid input. Directory number %d doesn't exist.\n", n);
+    fprintf(stderr, "Press enter to continue.");
+    while(getchar() != '\n'){}
+    return;
+  }
   if((d = opendir(".")) == NULL){
-    fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
-    exit(EXIT_FAILURE);
+    fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
+    fprintf(stderr, "Directory couldn't be opened.\n");
   }
 
   while((de = readdir(d)) && i <= n){
@@ -176,10 +200,11 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
   chdir(temp);
 
   if(getcwd(cwd, NAME_MAX) == NULL){
+    fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
     fprintf(stderr, "Current directory could not be opened.\n");
     exit(EXIT_FAILURE);
   }
-
+  
   for(i = 0; cwd[i] != '\0'; i++)
     dirName[i] = cwd[i];
   dirName[i] = '\0';

@@ -26,6 +26,9 @@ typedef enum{
 #include <time.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <errno.h>
+
+extern int errno ;
 
 typedef struct dirent dirent;
 typedef struct{

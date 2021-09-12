@@ -5,7 +5,6 @@
 #include "file_ops.h"
 
 int main(void) {
-  
   DIR* d = opendir(".");
   dirent* de;
   file_dat* files = malloc(sizeof(file_dat)*FILE_MAX);
@@ -21,6 +20,7 @@ int main(void) {
     exit(EXIT_FAILURE);
   }
   if(getcwd(dirName, sizeof(dirName)) == NULL){
+    fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
     fprintf(stderr, "Current directory could not be opened.\n");
     exit(EXIT_FAILURE);
   }
@@ -64,6 +64,14 @@ int main(void) {
       case 'H':
         hide = !hide;
         break;
+      default:
+        fprintf(stderr, "Invalid input.\n");
+        sleep(1);
+        break;
     }
+    while(getchar() != '\n'){}
   }
+
+  free(files);
+  free(editor);
 }
