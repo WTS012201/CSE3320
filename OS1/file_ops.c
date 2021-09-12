@@ -22,34 +22,28 @@ file_dat* insert_file(file_dat* arr, int idx, dirent *de){
 }
 
 void display_time(){
-  time_t t = time( NULL );
+  time_t t = time(NULL);
   
   printf( "Time: %s\n", ctime( &t ));
   printf("-----------------------------------------" );
 }
 
-void display_dirs(DIR* d){
-  char cwd[NAME_MAX];
+void display_dirs(DIR* d, char* dirName){
   int c = 0;
   dirent* de;
-  
-  if(getcwd(cwd, sizeof(cwd)) == NULL){
-    fprintf(stderr, "Current working directory could not be opened.\n");
-    exit(EXIT_FAILURE);
-  }
 
-  if((d = opendir(cwd)) == NULL){
+  if((d = opendir(".")) == NULL){
     fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
     exit(EXIT_FAILURE);
   }
 
-  printf( "\nCurrent Directory: %s \n", cwd);
+  printf( "\nCurrent Directory: %s \n", dirName);
 
   while(de = readdir(d)){
     if(de->d_type == __DT_DIR)
       printf( " ( %d Directory:  %s ) \n", c++, de->d_name);	  
   }
-  closedir( d );
+  closedir(d);
   printf( "-----------------------------------------\n" );
 }
 
@@ -58,12 +52,7 @@ void load_files(file_dat* arr, DIR* d){
   int c = 0;
   dirent* de;
 
-  if(getcwd(cwd, sizeof(cwd)) == NULL){
-    fprintf(stderr, "Current working directory could not be opened.\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if((d = opendir(cwd)) == NULL){
+  if((d = opendir(".")) == NULL){
     fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
     exit(EXIT_FAILURE);
   }
@@ -72,7 +61,7 @@ void load_files(file_dat* arr, DIR* d){
     if (de->d_type == __DT_REG)
       insert_file(arr, c++, de);
   }
-  closedir( d );
+  closedir(d);
 }
 
 void display_files(file_dat* arr, int amount, int *idx){
@@ -161,24 +150,42 @@ void sort(file_dat* arr){
 
   qsort(arr, c, sizeof(file_dat), cmp_size);
 }
-/*
-void change_dir(DIR* d){ 
-  int i, n;
-  char cwd[NAME_MAX];
+
+void change_dir(file_dat** arr, DIR* d, char* dirName){ 
+  int i = 0, n;
   dirent* de;
+  char cwd[NAME_MAX];
+  char* temp;
 
   printf("Enter directory number: ");
   scanf("%d", &n);
-
-  if(getcwd(cwd, sizeof(cwd)) == NULL){
-    fprintf(stderr, "Current working directory could not be opened.\n");
+  
+  if((d = opendir(".")) == NULL){
+    fprintf(stderr, "Directory couldn't be determined or size conflict.\n");
     exit(EXIT_FAILURE);
   }
-  opendir(cwd);
 
-  for(i = 0; i < n; i++)
-    de = readdir(d);
+  while((de = readdir(d)) && i <= n){
+    if(de->d_type == __DT_DIR){
+      i++;
+      temp = de->d_name;
+    }
+  }
+
   closedir(d);
-  d = opendir(de->d_name);
-  closedir(d);
-}*/
+  chdir(temp);
+
+  if(getcwd(cwd, NAME_MAX) == NULL){
+    fprintf(stderr, "Current directory could not be opened.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  for(i = 0; cwd[i] != '\0'; i++)
+    dirName[i] = cwd[i];
+  dirName[i] = '\0';
+
+  file_dat* new_files = malloc(sizeof(file_dat)*FILE_MAX);
+  load_files(new_files, d);
+  *arr = new_files;
+  
+}

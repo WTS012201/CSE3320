@@ -13,10 +13,15 @@ int main(void) {
   int const num_files = 5;
   bool hide = false;
   char* editor = (char*)malloc(sizeof(char)*strlen("xdg-open"));  //  May want to change this later
+  char dirName[NAME_MAX];
 
   editor = "xdg-open";
   if(!system(editor)){
     fprintf(stderr, "\nCould not find an editor.\n");
+    exit(EXIT_FAILURE);
+  }
+  if(getcwd(dirName, sizeof(dirName)) == NULL){
+    fprintf(stderr, "Current directory could not be opened.\n");
     exit(EXIT_FAILURE);
   }
   load_files(files, d);
@@ -25,7 +30,7 @@ int main(void) {
     fflush(stdout);
     system("clear");
     display_time();
-    display_dirs(d);
+    display_dirs(d, dirName);
     display_files(files, num_files, &idx);
     if(!hide) display_options();
 
@@ -38,8 +43,8 @@ int main(void) {
         run_program(files);
         break;
       case 'C':
-        //change_dir(d);       
-        //load_files(files, d);
+        change_dir(&files, d, dirName);
+        idx = 0;
         break;
       case 'S':
         sort(files);
