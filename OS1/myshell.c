@@ -47,7 +47,7 @@ int main(void) {
         idx = 0;
         break;
       case 'S':
-        sort(files);
+        sort(&files);
         break;
       case 'Q':
         system("clear");

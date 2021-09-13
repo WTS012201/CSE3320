@@ -163,30 +163,59 @@ int cmp_date(const void* a, const void* b){
   const file_dat* A = a;
   const file_dat* B = b;
   bool C;
-  
+
   return (A->date.tm_year < B->date.tm_year) ? true : 
   (C = (A->date.tm_year == B->date.tm_year)) && (A->date.tm_mon < B->date.tm_mon) ? true : 
-  (C = C && (A->date.tm_mon == B->date.tm_mon)) && (A->date.tm_mday < B->date.tm_mday) ? true : 
-  (C = C && (A->date.tm_mday == B->date.tm_mday)) && (A->date.tm_hour < B->date.tm_hour) ? true : 
-  (C = C && (A->date.tm_hour == B->date.tm_hour)) && (A->date.tm_min < B->date.tm_min) ? true : 
-  (C = C && (A->date.tm_min == B->date.tm_min)) && (A->date.tm_sec < B->date.tm_sec) ? true : false;
-
-  return false;
+  (C &= (A->date.tm_mon == B->date.tm_mon)) && (A->date.tm_mday < B->date.tm_mday) ? true : 
+  (C &= (A->date.tm_mday == B->date.tm_mday)) && (A->date.tm_hour < B->date.tm_hour) ? true : 
+  (C &= (A->date.tm_hour == B->date.tm_hour)) && (A->date.tm_min < B->date.tm_min) ? true : 
+  (C &= (A->date.tm_min == B->date.tm_min)) && (A->date.tm_sec < B->date.tm_sec) ? true : false;
 }
 
-void sort(file_dat* arr){
-  int c = 0;
-
-  while(arr[c].fName != NULL){ c++;}  //  Since fName is malloced, this is the easiest way to get the size of arr
-  printf("Sort by size or date (S/D): ");
-  qsort(arr, c, sizeof(file_dat), cmp_date);
-  /*
-  if(toupper(getchar()) == 'S'){
-    qsort(arr, c, sizeof(file_dat), cmp_size);
-  }else if(toupper(getchar()) == 'C'){
-    qsort(arr, c, sizeof(file_dat), cmp_date);
-  }*/
+void sort(file_dat** arr){
+  int i = 0, n = 0;
+  char c;
   
+  while((*arr)[n].fName != NULL){ n++;}
+  printf("Sort by size or modified date (S/D): ");
+  file_dat* temp = malloc(sizeof(file_dat)*n);
+
+  while(getchar() != '\n'){}
+  
+  if((c = toupper(getchar())) == 'S'){
+    while(getchar() != '\n'){}
+    printf("Least to Greatest or Greatest to Least (L/G): ");
+    if((c = toupper(getchar())) == 'L')
+      qsort(*arr, n, sizeof(file_dat), cmp_size);
+    else if(c == 'G'){
+      qsort(*arr, n, sizeof(file_dat), cmp_size);
+      for(; i < n; i++)
+        temp[i] = (*arr)[n-i-1];
+      *arr = temp;
+    }
+    else{
+      fprintf(stderr, "Invalid input.\n");
+      sleep(3);
+    }
+  } else if(c == 'D'){
+    while(getchar() != '\n'){}
+    printf("Newest to Oldest or Oldest to Newest (N/O): ");
+    if((c = toupper(getchar())) == 'N')
+      qsort(*arr, n, sizeof(file_dat), cmp_date);
+    else if(c == 'O'){
+      qsort(*arr, n, sizeof(file_dat), cmp_date);
+      for(; i < n; i++)
+        temp[i] = (*arr)[n-i-1];
+      *arr = temp;
+    }
+    else{
+      fprintf(stderr, "Invalid input.\n");
+      sleep(3);
+    }
+  } else{
+    fprintf(stderr, "Invalid input.\n");
+    sleep(3);
+  }
 }
 
 void change_dir(file_dat** arr, DIR* d, char* dirName){ 
