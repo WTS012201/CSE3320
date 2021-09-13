@@ -66,10 +66,10 @@ int main(void) {
         break;
       default:
         fprintf(stderr, "Invalid input.\n");
-        sleep(1);
         break;
     }
-    while(getchar() != '\n'){}
+    
+    //while(getchar() != '\n'){}
   }
 
   free(files);

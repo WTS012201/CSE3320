@@ -159,13 +159,34 @@ int cmp_size(const void* a, const void* b){
 
   return (A->size - B->size);
 }
+int cmp_date(const void* a, const void* b){
+  const file_dat* A = a;
+  const file_dat* B = b;
+  bool C;
+  
+  return (A->date.tm_year < B->date.tm_year) ? true : 
+  (C = (A->date.tm_year == B->date.tm_year)) && (A->date.tm_mon < B->date.tm_mon) ? true : 
+  (C = C && (A->date.tm_mon == B->date.tm_mon)) && (A->date.tm_mday < B->date.tm_mday) ? true : 
+  (C = C && (A->date.tm_mday == B->date.tm_mday)) && (A->date.tm_hour < B->date.tm_hour) ? true : 
+  (C = C && (A->date.tm_hour == B->date.tm_hour)) && (A->date.tm_min < B->date.tm_min) ? true : 
+  (C = C && (A->date.tm_min == B->date.tm_min)) && (A->date.tm_sec < B->date.tm_sec) ? true : false;
+
+  return false;
+}
 
 void sort(file_dat* arr){
   int c = 0;
 
   while(arr[c].fName != NULL){ c++;}  //  Since fName is malloced, this is the easiest way to get the size of arr
-
-  qsort(arr, c, sizeof(file_dat), cmp_size);
+  printf("Sort by size or date (S/D): ");
+  qsort(arr, c, sizeof(file_dat), cmp_date);
+  /*
+  if(toupper(getchar()) == 'S'){
+    qsort(arr, c, sizeof(file_dat), cmp_size);
+  }else if(toupper(getchar()) == 'C'){
+    qsort(arr, c, sizeof(file_dat), cmp_date);
+  }*/
+  
 }
 
 void change_dir(file_dat** arr, DIR* d, char* dirName){ 
