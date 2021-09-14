@@ -7,11 +7,10 @@
 int main(void) {
   DIR* d = opendir(".");
   file_dat* files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
-  int idx = 0;
-  int const num_files = 5;
+  int idx = 0, num_files = 5;
   bool hide = false;
   char* editor = (char*)malloc(sizeof(char)*strlen("xdg-open"));  //  May want to change this later
-  char dirName[NAME_MAX + 1];
+  char dirName[NAME_MAX + 1], args[ARGS_MAX + 1];
 
   editor = "xdg-open";
   if(!system(editor)){
@@ -34,41 +33,49 @@ int main(void) {
     if(!hide) display_options();
 
     printf("Enter Operation: ");
-    switch(toupper(getchar())){
-      case 'E':
-        edit_file(files, editor);
-        break;
-      case 'R':
-        run_program(files);
-        break;
-      case 'C':
-        change_dir(&files, d, dirName);
-        idx = 0;
-        break;
-      case 'S':
-        sort(&files);
-        break;
-      case 'Q':
-        system("clear");
-        exit(EXIT_SUCCESS);
-        break;
-      case 'N':
-        if(files[idx + num_files].fName != NULL)
-          idx += num_files;
-        break;
-      case 'P':
-        if(idx != 0)
-          idx -= num_files;
-        break;
-      case 'H':
-        hide = !hide;
-        break;
-      default:
-        fprintf(stderr, "Invalid input.\n");
-        break;
+    fgets(args, ARGS_MAX, stdin);
+    while(args[1] != '\n'){
+      fprintf(stderr, "Invalid input. Reenter Operation: ");
+      fgets(args, ARGS_MAX, stdin);
     }
-    
-    //while(getchar() != '\n'){}
+
+    while(true){
+      switch(toupper(args[0])){
+        case 'E':
+          edit_file(files, editor);
+          break;
+        case 'R':
+          run_program(files);
+          break;
+        case 'C':
+          change_dir(&files, d, dirName);
+          idx = 0;
+          break;
+        case 'S':
+          sort(&files);
+          break;
+        case 'Q':
+          system("clear");
+          exit(EXIT_SUCCESS);
+          break;
+        case 'N':
+          if(files[idx + num_files].fName != NULL)
+            idx += num_files;
+          break;
+        case 'P':
+          if(idx != 0)
+            idx -= num_files;
+          break;
+        case 'H':
+          hide = !hide;
+          break;
+        default:
+          fprintf(stderr, "Invalid input. Reenter Operation: ");
+          fgets(args, ARGS_MAX, stdin);
+          continue;
+      }
+    break;
+    }
   }
 
   free(files);

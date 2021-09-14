@@ -2,7 +2,7 @@
 
 file_dat* insert_file(file_dat* arr, int idx, dirent *de){
   if(strlen(de->d_name) > NAME_MAX){
-    fprintf(stderr, "File name excedes limit of %d chars: %d chars.\n", NAME_MAX, strlen(de->d_name));
+    fprintf(stderr, "File name excedes limit of %d chars: %d chars.\n", NAME_MAX, (int)strlen(de->d_name));
     exit(EXIT_FAILURE);
   }
 
@@ -10,7 +10,7 @@ file_dat* insert_file(file_dat* arr, int idx, dirent *de){
   struct stat st;
 
   stat(de->d_name, &st);
-  file->fName = (char*)malloc(sizeof(char)*strlen(de->d_name));
+  file->fName = (char*)malloc(sizeof(char)*(int)strlen(de->d_name));
   strcpy(file->fName, de->d_name);
   file->size = st.st_size;
   file->date = *localtime(&(st.st_mtime));
@@ -97,18 +97,16 @@ void display_options(){
 
 void edit_file(file_dat* arr, char* editor){
   int n, c = 0;
-  char* in = (char*)malloc(sizeof(char)*(NAME_MAX + strlen(editor) + 1));
-
-  printf("Enter file number: ");
-  scanf("%d", &n); getchar();
+  char* in = (char*)malloc(sizeof(char)*(NAME_MAX + (int)strlen(editor) + 1));
 
   while(arr[c].fName != NULL){ c++;}
-  if(n >= c || n < 0){
-    fprintf(stderr, "Invalid input. File number %d doesn't exist.\n", n);
-    fprintf(stderr, "Press enter to continue.");
-    while(getchar() != '\n'){}
-    return;
+
+  printf("Enter file number: ");
+  while(!scanf("%d", &n) || (n >= c || n < 0)){
+    fprintf(stderr, "Not a file number. Reenter file number: ");
+    scanf("%*[^\n]");
   }
+  getchar();
 
   sprintf(in, "%s %s", editor, arr[n].fName);
   system("clear");
@@ -117,7 +115,7 @@ void edit_file(file_dat* arr, char* editor){
     fprintf(stderr, "\nFile could not be opened using %s\n", editor);
     printf("Check if the selected file can be opened with the editor.\n\n");
     printf("Press enter to continue.");
-    while(getchar() != '\n'){}  getchar();
+    while(getchar() != '\n');  
   }
 
   free(in);
@@ -126,31 +124,28 @@ void edit_file(file_dat* arr, char* editor){
 void run_program(file_dat* arr){
   int n, c = 0;
   char* params = (char*)malloc(sizeof(char)*ARGS_MAX);
-
-  printf("Enter file number: ");
-  scanf("%d", &n); getchar();
   
   while(arr[c].fName != NULL){ c++;}
-  if(n >= c || n < 0){
-    fprintf(stderr, "Invalid input. File number %d doesn't exist.\n", n);
-    fprintf(stderr, "Press enter to continue.");
-    while(getchar() != '\n'){}
-    return;
+
+  printf("Enter file number: ");
+  while(!scanf("%d", &n) || (n >= c || n < 0)){
+    fprintf(stderr, "Not a file number. Reenter file number: ");
+    scanf("%*[^\n]");
   }
+  getchar();
 
   printf("Arguments (If none press enter): ");
   fgets(params, ARGS_MAX, stdin);
-
   system("clear");
 
-  char* in = (char*)malloc(sizeof(char)*(strlen("./ ") + strlen(arr[n].fName) + strlen(params)));
+  char* in = (char*)malloc(sizeof(char)*(int)(strlen("./ ") + strlen(arr[n].fName) + strlen(params)));
   sprintf(in, "./%s %s", arr[n].fName, params);
 
   if(system(in)){
     fprintf(stderr, "\nProgram could not be executed.\n");
     printf("Check if the selected file is executable and file permissions.\n\n");
     printf("Press enter to continue.");
-    while(getchar() != '\n'){}
+    while(getchar() != '\n');
   }
 
   free(params);
@@ -178,49 +173,65 @@ int cmp_date(const void* a, const void* b){
 
 void sort(file_dat** arr){
   int i = 0, n = 0;
-  char c;
-  
+  char args[ARGS_MAX + 1];
+
   while((*arr)[n].fName != NULL){ n++;}
   printf("Sort by size or modified date (S/D): ");
-  file_dat* temp = malloc(sizeof(file_dat)*(n+1));
 
-  while(getchar() != '\n'){}
-  
-  if((c = toupper(getchar())) == 'S'){
-    while(getchar() != '\n'){}
-    printf("Least to Greatest or Greatest to Least (L/G): ");
-    if((c = toupper(getchar())) == 'L')
-      qsort(*arr, n, sizeof(file_dat), cmp_size);
-    else if(c == 'G'){
-      qsort(*arr, n, sizeof(file_dat), cmp_size);
-      for(; i < n; i++)
-        temp[i] = (*arr)[n-i-1];
-      *arr = temp;
+  fgets(args, ARGS_MAX, stdin);
+  while(args[1] != '\n'){
+      fprintf(stderr, "Invalid input. Reenter Operation: ");
+      fgets(args, ARGS_MAX, stdin);
+  }
+
+  while(true){
+    if(toupper(args[0]) == 'S' || toupper(args[0]) == 'D'){
+      if(toupper(args[0]) == 'S'){
+        qsort(*arr, n, sizeof(file_dat), cmp_size);
+        printf("Least to Greatest or Greatest to Least (L/G): ");
+      } else if(toupper(args[0]) == 'D'){
+        qsort(*arr, n, sizeof(file_dat), cmp_date);
+        printf("Newest to Oldest or Oldest to Newest (N/O): ");
+      }
+      break;
+    } else{
+        fprintf(stderr, "Invalid input. Reenter Operation: ");
+        fgets(args, ARGS_MAX, stdin);
+        while(args[1] != '\n'){
+          fprintf(stderr, "Invalid input. Reenter Operation: ");
+          fgets(args, ARGS_MAX, stdin);
+        }
     }
-    else{
-      fprintf(stderr, "Invalid input.\n");
-      sleep(3);
+  }
+
+  fgets(args, ARGS_MAX, stdin);
+  while(args[1] != '\n'){
+      fprintf(stderr, "Invalid input. Reenter Operation: ");
+      fgets(args, ARGS_MAX, stdin);
+  }
+
+  while(true){
+    while(args[1] != '\n'){
+      fprintf(stderr, "Invalid input. Reenter Operation: ");
+      fgets(args, ARGS_MAX, stdin);
     }
-  } else if(c == 'D'){
-    while(getchar() != '\n'){}
-    printf("Newest to Oldest or Oldest to Newest (N/O): ");
-    if((c = toupper(getchar())) == 'N')
-      qsort(*arr, n, sizeof(file_dat), cmp_date);
-    else if(c == 'O'){
-      qsort(*arr, n, sizeof(file_dat), cmp_date);
-      for(; i < n; i++)
-        temp[i] = (*arr)[n-i-1];
-      *arr = temp;
+
+    if(toupper(args[0]) == 'L' || toupper(args[0]) == 'N')
+      return;
+    else if(toupper(args[0]) == 'G' || toupper(args[0]) == 'O'){
+      for(; i < n/2; i++){
+        file_dat file = (*arr)[i];
+        (*arr)[i] = (*arr)[n - i - 1];
+        (*arr)[n - i - 1] = file;
+      }
+      return;
+    } else{
+        fprintf(stderr, "Invalid input. Reenter Operation: ");
+        fgets(args, ARGS_MAX, stdin);
     }
-    else{
-      fprintf(stderr, "Invalid input.\n");
-      sleep(3);
-    }
-  } else{
-    fprintf(stderr, "Invalid input.\n");
-    sleep(3);
   }
 }
+
 
 void change_dir(file_dat** arr, DIR* d, char* dirName){ 
   int i = 0, n;
@@ -230,17 +241,17 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
 
   printf("Enter directory number: ");
   scanf("%d", &n);  getchar();
-  system("clear");
 
   if(n < 0){
-    fprintf(stderr, "Invalid input. Directory number %d doesn't exist.\n", n);
+    fprintf(stderr, "Directory number %d doesn't exist. Defaulting to Directory 0.\n", n);
+    n = 0;
     fprintf(stderr, "Press enter to continue.");
-    while(getchar() != '\n'){}
-    return;
+    while(getchar() != '\n');
   }
   if((d = opendir(".")) == NULL){
     fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
     fprintf(stderr, "Directory couldn't be opened.\n");
+    exit(EXIT_FAILURE);
   }
 
   while((de = readdir(d)) && i <= n){
@@ -249,6 +260,14 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
       temp = de->d_name;
     }
   }
+
+  if(i < n){
+    fprintf(stderr, "Directory number %d doesn't exist. Defaulting to Directory %d.\n", n, i-1);
+    fprintf(stderr, "Press enter to continue.");
+    while(getchar() != '\n');
+  }
+
+  system("clear");
 
   closedir(d);
   chdir(temp);
@@ -266,5 +285,4 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
   file_dat* new_files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
   load_files(new_files, d);
   *arr = new_files;
-  
 }
