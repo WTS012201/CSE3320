@@ -6,13 +6,12 @@
 
 int main(void) {
   DIR* d = opendir(".");
-  dirent* de;
-  file_dat* files = malloc(sizeof(file_dat)*FILE_MAX);
+  file_dat* files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
   int idx = 0;
   int const num_files = 5;
   bool hide = false;
   char* editor = (char*)malloc(sizeof(char)*strlen("xdg-open"));  //  May want to change this later
-  char dirName[NAME_MAX];
+  char dirName[NAME_MAX + 1];
 
   editor = "xdg-open";
   if(!system(editor)){

@@ -47,7 +47,7 @@ void display_dirs(DIR* d, char* dirName){
 }
 
 void load_files(file_dat* arr, DIR* d){
-  char cwd[NAME_MAX];
+  char cwd[NAME_MAX + 1];
   int c = 0;
   dirent* de;
 
@@ -60,6 +60,10 @@ void load_files(file_dat* arr, DIR* d){
   while (de = readdir(d)){                    
     if (de->d_type == __DT_REG)
       insert_file(arr, c++, de);
+    if(c > FILE_MAX){
+      fprintf(stderr, "Limit of %d files exceded: %d files.\n", FILE_MAX, c);
+      exit(EXIT_FAILURE);
+    }
   }
   closedir(d);
 }
@@ -93,7 +97,7 @@ void display_options(){
 
 void edit_file(file_dat* arr, char* editor){
   int n, c = 0;
-  char* in = (char*)malloc(sizeof(char)*(NAME_MAX + strlen(editor)));
+  char* in = (char*)malloc(sizeof(char)*(NAME_MAX + strlen(editor) + 1));
 
   printf("Enter file number: ");
   scanf("%d", &n); getchar();
@@ -178,7 +182,7 @@ void sort(file_dat** arr){
   
   while((*arr)[n].fName != NULL){ n++;}
   printf("Sort by size or modified date (S/D): ");
-  file_dat* temp = malloc(sizeof(file_dat)*n);
+  file_dat* temp = malloc(sizeof(file_dat)*(n+1));
 
   while(getchar() != '\n'){}
   
@@ -221,7 +225,7 @@ void sort(file_dat** arr){
 void change_dir(file_dat** arr, DIR* d, char* dirName){ 
   int i = 0, n;
   dirent* de;
-  char cwd[NAME_MAX];
+  char cwd[NAME_MAX + 1];
   char* temp;
 
   printf("Enter directory number: ");
@@ -259,7 +263,7 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
     dirName[i] = cwd[i];
   dirName[i] = '\0';
 
-  file_dat* new_files = malloc(sizeof(file_dat)*FILE_MAX);
+  file_dat* new_files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
   load_files(new_files, d);
   *arr = new_files;
   
