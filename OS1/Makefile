@@ -10,4 +10,4 @@ file_ops.o: file_ops.c *.h
 	$(GCC) $(GCCFLAGS) -c file_ops.c -o file_ops.o
 
 clean:
-	rm -f *.o myshell
+	rm -f *.o myshell .editor

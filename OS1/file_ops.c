@@ -43,6 +43,11 @@ void display_dirs(DIR* d, char* dirName){
       printf( " ( %d Directory:  %s ) \n", c++, de->d_name);	  
   }
   closedir(d);
+  if(c > FILE_MAX){
+    fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
+    fprintf(stderr, "Directory couldn't be opened.\n");
+    exit(EXIT_FAILURE);
+  }
   printf( "-----------------------------------------\n" );
 }
 
@@ -91,7 +96,8 @@ void display_files(file_dat* arr, int amount, int *idx){
 void display_options(){
   printf("Operation:\tE Edit\n\t\tR Run\n\t\tC Change Directory");
   printf("\n\t\tS Sort Directory file/date\n\t\tQ Quit");
-  printf("\n\t\tN Next\n\t\tP Previous\n\t\tH Hide Operations\n");
+  printf("\n\t\tN Next\n\t\tP Previous\n\t\tH Hide Operations");
+  printf("\n\t\tX Change Editor\n");
   printf( "-----------------------------------------\n" );
 }
 
@@ -100,6 +106,12 @@ void edit_file(file_dat* arr, char* editor){
   char* in = (char*)malloc(sizeof(char)*(NAME_MAX + (int)strlen(editor) + 1));
 
   while(arr[c].fName != NULL){ c++;}
+  if(c == 0){
+    fprintf(stderr, "\nNo files in directory.\n\n");
+    printf("Press enter to continue.");
+    while(getchar() != '\n');
+    return;
+  }
 
   printf("Enter file number: ");
   while(!scanf("%d", &n) || (n >= c || n < 0)){
@@ -126,6 +138,12 @@ void run_program(file_dat* arr){
   char* params = (char*)malloc(sizeof(char)*ARGS_MAX);
   
   while(arr[c].fName != NULL){ c++;}
+  if(c == 0){
+    fprintf(stderr, "\nNo files in directory.\n\n");
+    printf("Press enter to continue.");
+    while(getchar() != '\n');
+    return;
+  }
 
   printf("Enter file number: ");
   while(!scanf("%d", &n) || (n >= c || n < 0)){
@@ -171,11 +189,17 @@ int cmp_date(const void* a, const void* b){
   (C &= (A->date.tm_min == B->date.tm_min)) && (A->date.tm_sec < B->date.tm_sec) ? true : false;
 }
 
-void sort(file_dat** arr){
+void sort(file_dat* arr){
   int i = 0, n = 0;
   char args[ARGS_MAX + 1];
 
-  while((*arr)[n].fName != NULL){ n++;}
+  while(arr[n].fName != NULL){ n++;}
+  if(n == 0){
+    fprintf(stderr, "\nNo files in directory.\n\n");
+    printf("Press enter to continue.");
+    while(getchar() != '\n');
+    return;
+  }
   printf("Sort by size or modified date (S/D): ");
 
   fgets(args, ARGS_MAX, stdin);
@@ -187,10 +211,10 @@ void sort(file_dat** arr){
   while(true){
     if(toupper(args[0]) == 'S' || toupper(args[0]) == 'D'){
       if(toupper(args[0]) == 'S'){
-        qsort(*arr, n, sizeof(file_dat), cmp_size);
+        qsort(arr, n, sizeof(file_dat), cmp_size);
         printf("Least to Greatest or Greatest to Least (L/G): ");
       } else if(toupper(args[0]) == 'D'){
-        qsort(*arr, n, sizeof(file_dat), cmp_date);
+        qsort(arr, n, sizeof(file_dat), cmp_date);
         printf("Newest to Oldest or Oldest to Newest (N/O): ");
       }
       break;
@@ -220,9 +244,9 @@ void sort(file_dat** arr){
       return;
     else if(toupper(args[0]) == 'G' || toupper(args[0]) == 'O'){
       for(; i < n/2; i++){
-        file_dat file = (*arr)[i];
-        (*arr)[i] = (*arr)[n - i - 1];
-        (*arr)[n - i - 1] = file;
+        file_dat file = arr[i];
+        arr[i] = arr[n - i - 1];
+        arr[n - i - 1] = file;
       }
       return;
     } else{
@@ -234,41 +258,37 @@ void sort(file_dat** arr){
 
 
 void change_dir(file_dat** arr, DIR* d, char* dirName){ 
-  int i = 0, n;
+  int i = 0, c = 0, n;
   dirent* de;
   char cwd[NAME_MAX + 1];
   char* temp;
 
-  printf("Enter directory number: ");
-  scanf("%d", &n);  getchar();
-
-  if(n < 0){
-    fprintf(stderr, "Directory number %d doesn't exist. Defaulting to Directory 0.\n", n);
-    n = 0;
-    fprintf(stderr, "Press enter to continue.");
-    while(getchar() != '\n');
-  }
   if((d = opendir(".")) == NULL){
     fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
     fprintf(stderr, "Directory couldn't be opened.\n");
     exit(EXIT_FAILURE);
   }
+  while((de = readdir(d)))  //  Counting number of directories
+    if(de->d_type == __DT_DIR)
+      c++;
+  closedir(d);
 
-  while((de = readdir(d)) && i <= n){
+  printf("Enter directory number: ");
+  while(!scanf("%d", &n) || (n >= c || n < 0)){
+    fprintf(stderr, "Not a directory number. Reenter directory number: ");
+    scanf("%*[^\n]");
+  }
+  getchar();
+
+  opendir(".");
+  while((de = readdir(d)) && i <= n){ //  Moves pointer to dir user selected
     if(de->d_type == __DT_DIR){
       i++;
       temp = de->d_name;
     }
   }
 
-  if(i < n){
-    fprintf(stderr, "Directory number %d doesn't exist. Defaulting to Directory %d.\n", n, i-1);
-    fprintf(stderr, "Press enter to continue.");
-    while(getchar() != '\n');
-  }
-
   system("clear");
-
   closedir(d);
   chdir(temp);
 
@@ -285,4 +305,18 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
   file_dat* new_files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
   load_files(new_files, d);
   *arr = new_files;
+}
+void change_editor(char* editor){
+  int c;
+  FILE* fp;
+  
+  printf("Enter editor: ");
+  fgets(editor, NAME_MAX, stdin);
+  c = 0;
+  while(editor[c] != '\n'){ c++;}
+  editor[c] = '\0';
+
+  fp = fopen(".editor", "w+");
+  fputs(editor, fp);
+  fclose(fp);
 }

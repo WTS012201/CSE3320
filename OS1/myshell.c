@@ -7,16 +7,28 @@
 int main(void) {
   DIR* d = opendir(".");
   file_dat* files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
-  int idx = 0, num_files = 5;
+  FILE* fp = fopen(".editor", "r");
+  int c = 0, idx = 0, num_files = 5;
   bool hide = false;
-  char* editor = (char*)malloc(sizeof(char)*strlen("xdg-open"));  //  May want to change this later
-  char dirName[NAME_MAX + 1], args[ARGS_MAX + 1];
+  char* editor = (char*)malloc(sizeof(char)*(NAME_MAX));
+  char* args = (char*)malloc(sizeof(char)*(ARGS_MAX));
+  char dirName[NAME_MAX + 1];
 
-  editor = "xdg-open";
-  if(!system(editor)){
-    fprintf(stderr, "\nCould not find an editor.\n");
-    exit(EXIT_FAILURE);
+  if(fp == NULL){
+    if(system("xdg-open") == 256){
+      fp = fopen(".editor", "w");
+      editor = "xdg-open";
+      fputs(editor, fp);    //  This is the default for most editors on linux.
+      fclose(fp);
+    } else
+      change_editor(editor);    //  If system doesn't have xdg-open, ask the user to set editor.
+  } else{                       //  Load editor
+    fp = fopen(".editor", "r");
+    while((editor[c] = getc(fp)) != '\n' && (editor[c] != EOF)){ c++;}
+    editor[c] = '\0';
+    fclose(fp);
   }
+
   if(getcwd(dirName, sizeof(dirName)) == NULL){
     fprintf(stderr, "Error opening dir: %s\n", strerror(errno));
     fprintf(stderr, "Current directory could not be opened.\n");
@@ -52,7 +64,7 @@ int main(void) {
           idx = 0;
           break;
         case 'S':
-          sort(&files);
+          sort(files);
           break;
         case 'Q':
           system("clear");
@@ -68,6 +80,9 @@ int main(void) {
           break;
         case 'H':
           hide = !hide;
+          break;
+        case 'X':
+          change_editor(editor);
           break;
         default:
           fprintf(stderr, "Invalid input. Reenter Operation: ");

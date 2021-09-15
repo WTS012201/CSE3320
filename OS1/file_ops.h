@@ -47,6 +47,7 @@ void display_options();
 void edit_file(file_dat* arr, char* editor);
 void run_program(file_dat* arr);
 void change_dir(file_dat** arr, DIR* d, char* dirName);
-void sort(file_dat** arr);
+void change_editor(char* editor);
+void sort(file_dat* arr);
 
 #endif
