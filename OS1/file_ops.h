@@ -1,3 +1,7 @@
+//  Name: William Sigala
+//  CSE 3320
+//  Lab 1
+
 #undef DT_DIR
 #undef DT_REG
 
@@ -47,7 +51,7 @@ void display_options();
 void edit_file(file_dat* arr, char* editor);
 void run_program(file_dat* arr);
 void change_dir(file_dat** arr, DIR* d, char* dirName);
-void change_editor(char* editor);
+void change_editor(char* editor, char* editorPath);
 void sort(file_dat* arr);
 
 #endif

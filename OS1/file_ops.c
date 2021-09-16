@@ -1,3 +1,7 @@
+//  Name: William Sigala
+//  CSE 3320
+//  Lab 1
+
 #include "file_ops.h"
 
 file_dat* insert_file(file_dat* arr, int idx, dirent *de){
@@ -157,7 +161,7 @@ void run_program(file_dat* arr){
   system("clear");
 
   char* in = (char*)malloc(sizeof(char)*(int)(strlen("./ ") + strlen(arr[n].fName) + strlen(params)));
-  sprintf(in, "./%s %s", arr[n].fName, params);
+  sprintf(in, "./%s %s", arr[n].fName, params); //  Appends the executable to ./ and params to the executable.
 
   if(system(in)){
     fprintf(stderr, "\nProgram could not be executed.\n");
@@ -181,6 +185,7 @@ int cmp_date(const void* a, const void* b){
   const file_dat* B = b;
   bool C;
 
+  //  This ternary expression compares the time starting with the year and moves down to seconds if necessary.
   return (A->date.tm_year < B->date.tm_year) ? true : 
   (C = (A->date.tm_year == B->date.tm_year)) && (A->date.tm_mon < B->date.tm_mon) ? true : 
   (C &= (A->date.tm_mon == B->date.tm_mon)) && (A->date.tm_mday < B->date.tm_mday) ? true : 
@@ -209,11 +214,11 @@ void sort(file_dat* arr){
   }
 
   while(true){
-    if(toupper(args[0]) == 'S' || toupper(args[0]) == 'D'){
-      if(toupper(args[0]) == 'S'){
+    if(toupper(args[0]) == 'S' || toupper(args[0]) == 'D'){   //  First checks if valid input
+      if(toupper(args[0]) == 'S'){                            //  Sort by size
         qsort(arr, n, sizeof(file_dat), cmp_size);
         printf("Least to Greatest or Greatest to Least (L/G): ");
-      } else if(toupper(args[0]) == 'D'){
+      } else if(toupper(args[0]) == 'D'){                     //  Sort by date
         qsort(arr, n, sizeof(file_dat), cmp_date);
         printf("Newest to Oldest or Oldest to Newest (N/O): ");
       }
@@ -242,8 +247,8 @@ void sort(file_dat* arr){
 
     if(toupper(args[0]) == 'L' || toupper(args[0]) == 'N')
       return;
-    else if(toupper(args[0]) == 'G' || toupper(args[0]) == 'O'){
-      for(; i < n/2; i++){
+    else if(toupper(args[0]) == 'G' || toupper(args[0]) == 'O'){  //  Revereses the order of the files after it is sorted
+      for(; i < n/2; i++){  
         file_dat file = arr[i];
         arr[i] = arr[n - i - 1];
         arr[n - i - 1] = file;
@@ -255,7 +260,6 @@ void sort(file_dat* arr){
     }
   }
 }
-
 
 void change_dir(file_dat** arr, DIR* d, char* dirName){ 
   int i = 0, c = 0, n;
@@ -306,17 +310,18 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
   load_files(new_files, d);
   *arr = new_files;
 }
-void change_editor(char* editor){
+
+void change_editor(char* editor, char* editorPath){ //  This is if the editor isn't working for the user.
   int c;
-  FILE* fp;
-  
+  FILE* fp = fopen(editorPath, "w+");
+
   printf("Enter editor: ");
   fgets(editor, NAME_MAX, stdin);
   c = 0;
   while(editor[c] != '\n'){ c++;}
   editor[c] = '\0';
 
-  fp = fopen(".editor", "w+");
   fputs(editor, fp);
+  printf("TEST\n");
   fclose(fp);
 }
