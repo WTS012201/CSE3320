@@ -74,12 +74,15 @@ void load_files(file_dat* arr, DIR* d){
       exit(EXIT_FAILURE);
     }
   }
+
   closedir(d);
 }
 
 void display_files(file_dat* arr, int amount, int *idx){
-  int c = *idx;
-
+  int c = *idx, n = get_file_amount();
+  if(n < amount)
+    amount = n;
+  
   for(; c < (amount + *idx); c++){
     if(arr[c].fName == NULL)
       break;
@@ -133,7 +136,7 @@ void edit_file(file_dat* arr, char* editor){
     printf("Press enter to continue.");
     while(getchar() != '\n');  
   }
-
+  
   free(in);
 }
 
@@ -196,6 +199,7 @@ int cmp_date(const void* a, const void* b){
 
 void sort(file_dat* arr){
   int i = 0, n = 0;
+  bool C;
   char args[ARGS_MAX + 1];
 
   while(arr[n].fName != NULL){ n++;}
@@ -215,7 +219,7 @@ void sort(file_dat* arr){
 
   while(true){
     if(toupper(args[0]) == 'S' || toupper(args[0]) == 'D'){   //  First checks if valid input
-      if(toupper(args[0]) == 'S'){                            //  Sort by size
+      if(C = (toupper(args[0]) == 'S')){                            //  Sort by size
         qsort(arr, n, sizeof(file_dat), cmp_size);
         printf("Least to Greatest or Greatest to Least (L/G): ");
       } else if(toupper(args[0]) == 'D'){                     //  Sort by date
@@ -245,10 +249,10 @@ void sort(file_dat* arr){
       fgets(args, ARGS_MAX, stdin);
     }
 
-    if(toupper(args[0]) == 'L' || toupper(args[0]) == 'N')
+    if((toupper(args[0]) == 'L' && C) || (toupper(args[0]) == 'N' && !C)) //  I know this looks redundant but it's necessary to validate input.
       return;
-    else if(toupper(args[0]) == 'G' || toupper(args[0]) == 'O'){  //  Revereses the order of the files after it is sorted
-      for(; i < n/2; i++){  
+    else if((toupper(args[0]) == 'G' && C) || (toupper(args[0]) == 'O' && !C)){          
+      for(; i < n/2; i++){                                                //  Revereses the order of the files after it is sorted
         file_dat file = arr[i];
         arr[i] = arr[n - i - 1];
         arr[n - i - 1] = file;
@@ -261,7 +265,7 @@ void sort(file_dat* arr){
   }
 }
 
-void change_dir(file_dat** arr, DIR* d, char* dirName){ 
+file_dat* change_dir(DIR* d, char* dirName){ 
   int i = 0, c = 0, n;
   dirent* de;
   char cwd[NAME_MAX + 1];
@@ -308,20 +312,33 @@ void change_dir(file_dat** arr, DIR* d, char* dirName){
 
   file_dat* new_files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
   load_files(new_files, d);
-  *arr = new_files;
+  return new_files;
 }
 
 void change_editor(char* editor, char* editorPath){ //  This is if the editor isn't working for the user.
   int c;
-  FILE* fp = fopen(editorPath, "w+");
-
+  FILE* fp = fopen(editorPath, "w");
+  
   printf("Enter editor: ");
   fgets(editor, NAME_MAX, stdin);
+
   c = 0;
   while(editor[c] != '\n'){ c++;}
   editor[c] = '\0';
 
   fputs(editor, fp);
-  printf("TEST\n");
   fclose(fp);
+}
+
+int get_file_amount(){
+  DIR* d = opendir(".");
+  dirent* de;
+  int num_files = 0;
+
+  while (de = readdir(d))      
+    if (de->d_type == __DT_REG)
+      num_files++;
+  closedir(d);
+  
+  return num_files;
 }

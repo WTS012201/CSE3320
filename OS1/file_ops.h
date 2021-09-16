@@ -43,6 +43,7 @@ typedef struct{
 } file_dat;
 
 file_dat* insert_file(file_dat* arr, int idx, dirent *de);
+file_dat* change_dir(DIR* d, char* dirName);
 void display_time();
 void display_dirs(DIR* d, char* dirName);
 void load_files(file_dat* arr, DIR* d);
@@ -50,8 +51,8 @@ void display_files(file_dat* arr, int amount, int *idx);
 void display_options();
 void edit_file(file_dat* arr, char* editor);
 void run_program(file_dat* arr);
-void change_dir(file_dat** arr, DIR* d, char* dirName);
 void change_editor(char* editor, char* editorPath);
 void sort(file_dat* arr);
+int get_file_amount();
 
 #endif

@@ -5,11 +5,12 @@
 #include "file_ops.h"
 
 int main(void) {
-  DIR* d = opendir(".");
+  DIR* d;
+  dirent *de;
   file_dat* files = malloc(sizeof(file_dat)*(FILE_MAX + 1));
   FILE* fp = fopen(".editor", "r");
 
-  int c = 0, idx = 0, num_files = 5;
+  int num_files = 0, c = 0, idx = 0, max_display = 5;
   bool hide = false;
   char* editor = (char*)malloc(sizeof(char)*(NAME_MAX));
   char* editorPath = (char*)malloc(sizeof(char)*(NAME_MAX));
@@ -31,18 +32,18 @@ int main(void) {
   if(fp == NULL){                   //  Checks if .editor exists
     if(system("xdg-open") == 256){  //  Checks if xdg-open is on the system.
       fp = fopen(".editor", "w");
-      editor = "xdg-open";
-      fputs(editor, fp);        
+      fputs("xdg-open", fp);        
       fclose(fp);
     } else
       change_editor(editor, editorPath);        //  If system doesn't have xdg-open, ask the user to set editor.
-  } else{                           //  Load editor
-    fp = fopen(".editor", "r");
-    while((editor[c] = getc(fp)) != '\n' && (editor[c] != EOF)){ c++;}
-    editor[c] = '\0';
-    fclose(fp);
-  }
+  }                                       //  Load editor
 
+  fp = fopen(".editor", "r");
+  while((editor[c] = getc(fp)) != '\n' && (editor[c] != EOF)){ c++;}
+  editor[c] = '\0';
+  fclose(fp);
+
+  num_files = get_file_amount();
   load_files(files, d);
 
   while(true){
@@ -50,16 +51,16 @@ int main(void) {
     system("clear");
     display_time();
     display_dirs(d, dirName);
-    display_files(files, num_files, &idx);
+    display_files(files, max_display, &idx);
     if(!hide) display_options();
-
+    
     printf("Enter Operation: ");
     fgets(args, ARGS_MAX, stdin);
     while(args[1] != '\n'){
       fprintf(stderr, "Invalid input. Reenter Operation: ");
       fgets(args, ARGS_MAX, stdin);
     }
-
+    
     while(true){
       switch(toupper(args[0])){
         case 'E':
@@ -69,8 +70,9 @@ int main(void) {
           run_program(files);
           break;
         case 'C':
-          change_dir(&files, d, dirName);
-          idx = 0;
+          files = change_dir(d, dirName);
+          idx = num_files = 0;
+          num_files = get_file_amount();
           break;
         case 'S':
           sort(files);
@@ -80,12 +82,12 @@ int main(void) {
           exit(EXIT_SUCCESS);
           break;
         case 'N':
-          if(files[idx + num_files].fName != NULL)
-            idx += num_files;
+          if((idx + max_display) <= num_files)
+            idx += max_display;
           break;
         case 'P':
           if(idx != 0)
-            idx -= num_files;
+            idx -= max_display;
           break;
         case 'H':
           hide = !hide;
@@ -100,6 +102,7 @@ int main(void) {
       }
     break;
     }
+    
   }
 
   free(files);
