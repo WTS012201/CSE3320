@@ -72,7 +72,6 @@ void Disk::put(std::string name){
     if(name.length() > FS::ENTRY_MAX)
         return throw std::runtime_error{"File name too big"};
 
-    auto disk = std::ifstream{disk_name, std::ios::binary | std::ios::out};
     auto temp = new char{FS::ENTRY_MAX};   strcpy(temp, name.c_str());
     struct stat file_stat;
     const char* c_temp = temp;
@@ -80,6 +79,5 @@ void Disk::put(std::string name){
     if(fstat(open(c_temp, std::ios::in), &file_stat) < 0)
         return throw std::runtime_error{"Error reading disk"};
     Entry file = {temp, (int)file_stat.st_ino};
-
-    disk.close();
+    //May want to throw meta info here
 }
