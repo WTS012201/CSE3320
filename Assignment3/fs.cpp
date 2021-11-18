@@ -2,8 +2,7 @@
 
 int main(int argv, char* argsv[]){
     std::string selection;
-    auto fs = new FS::FSManage{};
-    
+    auto fs = new FSManage{};
     while(true){
         std::cout << "Enter a selection: ";
         std::cin >> selection;

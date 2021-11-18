@@ -1,4 +1,7 @@
 *.zip
 *.pdf
 *.out
+*.o
+myshell
 .vscode
+.editor
