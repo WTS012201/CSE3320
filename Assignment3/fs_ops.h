@@ -23,27 +23,32 @@ namespace FS{
         int inode;
     }   Entry;
 
+    typedef struct BlockPointer{
+        int sector, next;
+    } BlockPointer;
+
     typedef struct DiskAttribute{  //  4 per block
-        char user[BLOCK_SIZE/4 - sizeof(int)*3];
-        int size, pointer, time;
+        char user[BLOCK_SIZE/4 - sizeof(int)*2 - sizeof(BlockPointer)];
+        int size, time;
+        BlockPointer pointer;
     } DiskAttribute;
 
     typedef struct DataBlock{
-        char data[BLOCK_SIZE - sizeof(int)];
-        int next;
-    }   DataBlock; 
+        char data[BLOCK_SIZE];
+    } DataBlock; 
 }
 
 typedef std::vector<bool> Bitmap;
 typedef std::vector<FS::Entry> EntryTable;
 typedef std::vector<FS::DiskAttribute> DABPT;
 typedef std::vector<FS::DataBlock> Sectors;
-
+typedef std::vector<FS::BlockPointer> BlockPointerTable;
 class Disk{
     private:
         Bitmap free_space;
         Sectors blocks;
         EntryTable entry_table;
+        BlockPointerTable block_pointer_table;
         DABPT meta;
 
         int num_blocks;
