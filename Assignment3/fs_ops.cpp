@@ -63,13 +63,13 @@ void Disk::open(std::string name){
     manage_data(meta, [&](FS::DiskAttribute& o){     //  DABPT
         disk.read((char*)&o, sizeof(o));
     }, num_DABPT_entries);
-    manage_data(free_space, [&](const bool& o){        //  Bitmap
-        disk.read((char*)&o, sizeof(o));
-    }, num_blocks);
     manage_data(block_pointer_table, [&](FS::BlockPointer& o){   //  BPT
         disk.read((char*)&o, sizeof(o));
     }, num_blocks);
     manage_data(blocks, [&](FS::DataBlock& o){       //  Blocks
+        disk.read((char*)&o, sizeof(o));
+    }, num_blocks);
+    manage_data(free_space, [&](const bool& o){        //  Bitmap
         disk.read((char*)&o, sizeof(o));
     }, num_blocks);
     disk.close();
@@ -92,11 +92,11 @@ void Disk::save(std::string name){
         disk.write((char*)&o, sizeof(o));});
     manage_data(meta, [&](FS::DiskAttribute o){     //  DABPT
         disk.write((char*)&o, sizeof(o));});
-    manage_data(free_space, [&](bool o){            //  Bitmap
-        disk.write((char*)&o, sizeof(o));});
     manage_data(block_pointer_table, [&](FS::BlockPointer o){   //  BPT
         disk.write((char*)&o, sizeof(o));});
     manage_data(blocks, [&](FS::DataBlock o){       //  Blocks
+        disk.write((char*)&o, sizeof(o));});
+    manage_data(free_space, [&](bool o){            //  Bitmap
         disk.write((char*)&o, sizeof(o));});
     disk.close();
 }
