@@ -57,20 +57,19 @@ void Disk::open(std::string name){
     disk.read((char*)&num_blocks, sizeof(int));
     disk.read((char*)&num_file_names, sizeof(int));
     disk.read((char*)&num_DABPT_entries, sizeof(int));
-
-    manage_data(entry_table, [&](FS::Entry o){      //FNT
+    manage_data(entry_table, [&](FS::Entry& o){      //FNT
         disk.read((char*)&o, sizeof(o));
     }, num_file_names);
-    manage_data(meta, [&](FS::DiskAttribute o){     //  DABPT
+    manage_data(meta, [&](FS::DiskAttribute& o){     //  DABPT
         disk.read((char*)&o, sizeof(o));
     }, num_DABPT_entries);
-    manage_data(block_pointer_table, [&](FS::BlockPointer o){   //  BPT
+    manage_data(free_space, [&](const bool& o){        //  Bitmap
         disk.read((char*)&o, sizeof(o));
     }, num_blocks);
-    manage_data(blocks, [&](FS::DataBlock o){       //  Blocks
+    manage_data(block_pointer_table, [&](FS::BlockPointer& o){   //  BPT
         disk.read((char*)&o, sizeof(o));
     }, num_blocks);
-    manage_data(free_space, [&](bool o){        //  Bitmap
+    manage_data(blocks, [&](FS::DataBlock& o){       //  Blocks
         disk.read((char*)&o, sizeof(o));
     }, num_blocks);
     disk.close();
@@ -89,16 +88,15 @@ void Disk::save(std::string name){
     disk.write((char*)&num_blocks, sizeof(int));
     disk.write((char*)&num_file_names, sizeof(int));
     disk.write((char*)&num_DABPT_entries, sizeof(int));
-    
     manage_data(entry_table, [&](FS::Entry o){      //  FNT
         disk.write((char*)&o, sizeof(o));});
     manage_data(meta, [&](FS::DiskAttribute o){     //  DABPT
         disk.write((char*)&o, sizeof(o));});
+    manage_data(free_space, [&](bool o){            //  Bitmap
+        disk.write((char*)&o, sizeof(o));});
     manage_data(block_pointer_table, [&](FS::BlockPointer o){   //  BPT
         disk.write((char*)&o, sizeof(o));});
     manage_data(blocks, [&](FS::DataBlock o){       //  Blocks
-        disk.write((char*)&o, sizeof(o));});
-    manage_data(free_space, [&](bool o){            //  Bitmap
         disk.write((char*)&o, sizeof(o));});
     disk.close();
 }
@@ -112,7 +110,9 @@ bool FSManage::put(std::string name){
 }
 void Disk::put(std::string name){
     if(name.length() > FS::ENTRY_MAX)
-        return throw std::runtime_error{"File name too big"};
+        return throw std::runtime_error{"File name too big."};
+    if(!free_space.size())
+        return throw std::runtime_error{"No disk opened. Open or create a new disk."};
 
     auto temp = new char{FS::ENTRY_MAX};   strcpy(temp, name.c_str());
     struct stat file_stat;
@@ -120,7 +120,7 @@ void Disk::put(std::string name){
 
     // Put in FNT
     if(fstat(::open(c_temp, std::ios::in), &file_stat) < 0)
-        return throw std::runtime_error{"Error reading disk"};
+        return throw std::runtime_error{"Error reading file."};
 
     FS::Entry file = {"", (int)file_stat.st_ino};
     for(auto i{0}; i < name.length(); i++)
@@ -140,7 +140,7 @@ void Disk::put(std::string name){
     for(auto i{0}; pw -> pw_name[i] != '\0' &&
         i < sizeof(DA.user); i++)
         DA.user[i] = pw -> pw_name[i];
-    meta.push_back(DA);
+    //meta.push_back(DA);
 
     //  Put in blocks.  Will account for bitmap later
     auto disk = std::ifstream{name, std::ios::binary};
@@ -148,9 +148,9 @@ void Disk::put(std::string name){
 
     while(!disk.eof()){
         FS::DataBlock DB;
-        for(auto i{0}; i < FS::BLOCK_SIZE; i++){
+        for(auto i{0}; i < FS::BLOCK_SIZE; i++)
             disk.read((char*)&DB.data[i], sizeof(char));
-        }
+        
         for(; scan < free_space.size(); scan++){ //  scan for a slot that is free
             if(!free_space.at(scan)){
                 free_space[scan] = true;
@@ -159,6 +159,6 @@ void Disk::put(std::string name){
             }
         }
         if(scan == free_space.size())
-            return throw std::runtime_error{"Not enough space available"};           
+            return throw std::runtime_error{"Not enough space available."};           
     }
 }
