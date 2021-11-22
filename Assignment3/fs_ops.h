@@ -6,6 +6,7 @@
 #include <fstream>
 #include <ios>
 #include <cstring>
+#include <algorithm>
 
 #include <sys/stat.h>
 #include <fcntl.h>  
@@ -29,7 +30,7 @@ namespace FS{
 
     typedef struct DiskAttribute{  //  4 per block
         char user[BLOCK_SIZE/4 - sizeof(int)*2 - sizeof(BlockPointer)];
-        int size, time;
+        int size, time, inode;
         BlockPointer pointer;
     } DiskAttribute;
 
@@ -64,11 +65,12 @@ class Disk{
         void get(std::string name);
         void save(std::string name);
         void open(std::string name);
+        void list();
         template<typename T, typename F>
             void manage_data(std::vector<T>& obj, F expr, int size = 0);
 };
 
-class FSManage{
+class FSManage{ //  For debugging
     private:
         Disk* current;
 
@@ -78,10 +80,10 @@ class FSManage{
         bool format_fs(int file_names, int DABPT_entries);
         bool save_fs(std::string disk_name);
         bool open_fs(std::string disk_name);
-        bool list();
+        bool list_fs();
         bool remove(std::string file_name);
         bool rename(std::string old_file_name, std::string new_file_name);
         bool put(std::string name); //  puts file on virtual disk
-        bool get(std::string ext_file);  // gets file on virtual disk
+        bool get(std::string name);  // gets file on virtual disk
 };
 #endif

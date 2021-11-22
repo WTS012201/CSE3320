@@ -5,7 +5,6 @@ bool FSManage::create_fs(int num_blocks){
     current = new Disk{num_blocks};
     return EXIT_SUCCESS;
 }
-
 Disk::Disk(){};
 Disk::Disk(int __num_blocks) : num_blocks{__num_blocks},
     offset{0}{
@@ -73,6 +72,7 @@ void Disk::open(std::string name){
         disk.read((char*)&o, sizeof(o));
     }, num_blocks);
     disk.close();
+    std::cout << entry_table[0].name << std::endl;
 }
 bool FSManage::save_fs(std::string disk_name){
     try{    current -> save(disk_name);}
@@ -125,7 +125,14 @@ void Disk::put(std::string name){
     FS::Entry file = {"", (int)file_stat.st_ino};
     for(auto i{0}; i < name.length(); i++)
         file.name[i] = name.at(i);
-
+    for(auto i{0}; i < entry_table.size() + 1; i++){
+        if(i == entry_table.size())
+            return throw std::runtime_error{"Ran out of reserved file spaces."};
+        if(!entry_table[i].name[0]){
+            entry_table[i] = file;
+            break;
+        }
+    }
     //  Put in DABPT
     auto time = gmtime(&file_stat.st_mtime);
     auto pw = getpwuid(file_stat.st_uid);
@@ -133,10 +140,9 @@ void Disk::put(std::string name){
     FS::DiskAttribute DA{
         "",
         (int)file_stat.st_size,
-        0,  //  Will change according to bitmap
-        (int)file_stat.st_mtim.tv_sec
+        (int)file_stat.st_mtim.tv_sec,
+        (int)file_stat.st_ino,
     };
-
     for(auto i{0}; pw -> pw_name[i] != '\0' &&
         i < sizeof(DA.user); i++)
         DA.user[i] = pw -> pw_name[i];
@@ -160,5 +166,48 @@ void Disk::put(std::string name){
         }
         if(scan == free_space.size())
             return throw std::runtime_error{"Not enough space available."};           
+    }
+}
+bool FSManage::get(std::string name){
+    try{    current -> get(name);}
+    catch(const std::exception& e){
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+void Disk::get(std::string name){
+    if(!entry_table.size())
+        return throw std::runtime_error{"No disk opened. Open or create a new disk."};
+    /*
+    for(auto i{0}; i < entry_table.size(); i++){
+        if(!std::strcmp(entry_table[i].name, name.c_str())){
+            break;
+        }
+    }*/
+    auto file = std::ofstream{name, std::ios::binary};
+    auto it = std::find_if(entry_table.begin(), entry_table.end(),
+    [name](const FS::Entry& e){
+        return !std::strcmp(e.name, name.c_str());
+    });
+    if(it == entry_table.end())
+        return throw std::runtime_error{"The file you've given is not on the disk."};
+    
+
+}
+bool FSManage::list_fs(){
+    try{    current -> list();}
+    catch(const std::exception& e){
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+void Disk::list(){
+    if(!entry_table.size())
+        return throw std::runtime_error{"No disk opened. Open or create a new disk."};
+    for(auto e : entry_table){
+        if(e.name[0] != '\0')
+            std::cout << "File Name: " << e.name << " inode: " << e.inode <<std::endl;
     }
 }
