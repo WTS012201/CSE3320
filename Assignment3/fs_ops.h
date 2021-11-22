@@ -25,13 +25,13 @@ namespace FS{
     }   Entry;
 
     typedef struct BlockPointer{
-        int sector, next;
+        int sector;
+        int next = -1;
     } BlockPointer;
 
     typedef struct DiskAttribute{  //  4 per block
-        char user[BLOCK_SIZE/4 - sizeof(int)*2 - sizeof(BlockPointer)];
-        int size, time, inode;
-        BlockPointer pointer;
+        char user[BLOCK_SIZE/4 - sizeof(int)*4];
+        int size, time, inode, bp;
     } DiskAttribute;
 
     typedef struct DataBlock{

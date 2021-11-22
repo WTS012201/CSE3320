@@ -56,6 +56,7 @@ void Disk::open(std::string name){
     disk.read((char*)&num_blocks, sizeof(int));
     disk.read((char*)&num_file_names, sizeof(int));
     disk.read((char*)&num_DABPT_entries, sizeof(int));
+
     manage_data(entry_table, [&](FS::Entry& o){      //FNT
         disk.read((char*)&o, sizeof(o));
     }, num_file_names);
@@ -72,7 +73,6 @@ void Disk::open(std::string name){
         disk.read((char*)&o, sizeof(o));
     }, num_blocks);
     disk.close();
-    std::cout << entry_table[0].name << std::endl;
 }
 bool FSManage::save_fs(std::string disk_name){
     try{    current -> save(disk_name);}
@@ -142,30 +142,48 @@ void Disk::put(std::string name){
         (int)file_stat.st_size,
         (int)file_stat.st_mtim.tv_sec,
         (int)file_stat.st_ino,
+        (int)block_pointer_table.size()
     };
     for(auto i{0}; pw -> pw_name[i] != '\0' &&
         i < sizeof(DA.user); i++)
         DA.user[i] = pw -> pw_name[i];
-    //meta.push_back(DA);
 
-    //  Put in blocks.  Will account for bitmap later
+    //  Put in blocks.  Will account for bitmap
     auto disk = std::ifstream{name, std::ios::binary};
-    auto scan{0};
+    auto curr{0}, prev{-1};
 
     while(!disk.eof()){
         FS::DataBlock DB;
+        FS::BlockPointer BP;
         for(auto i{0}; i < FS::BLOCK_SIZE; i++)
             disk.read((char*)&DB.data[i], sizeof(char));
         
-        for(; scan < free_space.size(); scan++){ //  scan for a slot that is free
-            if(!free_space.at(scan)){
-                free_space[scan] = true;
-                blocks[scan] = DB;
+        for(; curr < free_space.size(); curr++){ //  curr for a slot that is free
+            if(!free_space.at(curr)){
+                BP.sector = curr; // ok
+                block_pointer_table[curr] = BP;
+                if(prev == -1){       //  first case
+                    block_pointer_table[curr].next = prev;
+                    DA.bp = curr;
+                }
+                else
+                    block_pointer_table[prev].next = curr;
+                free_space[curr] = true;// ok
+                blocks[curr] = DB;// ok
+                prev = curr;
                 break;
             }
         }
-        if(scan == free_space.size())
+        if(curr == free_space.size())
             return throw std::runtime_error{"Not enough space available."};           
+    }
+    for(auto i{0}; i < meta.size() + 1; i++){
+        if(i == meta.size())
+            return throw std::runtime_error{"Ran out of reserved file spaces."};
+        if(!meta[i].user[0]){
+            meta[i] = DA;
+            break;
+        }
     }
 }
 bool FSManage::get(std::string name){
@@ -179,21 +197,30 @@ bool FSManage::get(std::string name){
 void Disk::get(std::string name){
     if(!entry_table.size())
         return throw std::runtime_error{"No disk opened. Open or create a new disk."};
-    /*
-    for(auto i{0}; i < entry_table.size(); i++){
-        if(!std::strcmp(entry_table[i].name, name.c_str())){
-            break;
-        }
-    }*/
-    auto file = std::ofstream{name, std::ios::binary};
-    auto it = std::find_if(entry_table.begin(), entry_table.end(),
+
+    auto it1 = std::find_if(entry_table.begin(), entry_table.end(),  //  Find entry in table
     [name](const FS::Entry& e){
         return !std::strcmp(e.name, name.c_str());
     });
-    if(it == entry_table.end())
-        return throw std::runtime_error{"The file you've given is not on the disk."};
-    
 
+    if(it1 == entry_table.end())             // If it's not in the table
+        return throw std::runtime_error{"The file you've given is not on the disk."};
+    auto it2 = std::find_if(meta.begin(), meta.end(),        //  Find the corresponding meta info
+    [it1](const FS::DiskAttribute& e){
+        return it1 -> inode == e.inode;
+    });
+
+    FS::BlockPointer bp = block_pointer_table[it2 -> bp];
+    auto file = std::ofstream{name, std::ios::binary};  //  Start writing to file
+    auto byte{0};
+    do{
+        auto i{0};
+        std::cout << "SECTOR: " << bp.sector << std::endl;
+        while(i < FS::BLOCK_SIZE && (byte++) < it2 -> size)
+            file.write((char*)&blocks[bp.sector].data[i++], sizeof(char));
+        if(bp.next != -1)
+            bp = block_pointer_table[bp.next];
+    } while (bp.next != -1);
 }
 bool FSManage::list_fs(){
     try{    current -> list();}
