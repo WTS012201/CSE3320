@@ -243,7 +243,18 @@ void Disk::list(){
     if(!entry_table.size())
         return throw std::runtime_error{"No disk opened. Open or create a new disk."};
     for(auto e : entry_table){
-        if(e.name[0] != '\0')
-            std::cout << "File Name: " << e.name << " inode: " << e.inode <<std::endl;
+        if(e.name[0] != '\0'){
+            auto it = std::find_if(meta.begin(), meta.end(),        //  Find the corresponding meta info
+            [e](const FS::DiskAttribute& da){
+                return e.inode == da.inode;
+            });
+            
+            std::cout << "File Name: " << e.name << std::endl;
+            std::cout << "\tinode: " << e.inode << std::endl;
+            std::cout << "\tSize: " << it -> size << " Bytes\n";
+            std::cout << "\tLast date: " << it -> time << " Secs\n";
+            std::cout << "\tUser: " << it -> user << std::endl;
+            //std::cout << std::endl;
+        }
     }
 }
