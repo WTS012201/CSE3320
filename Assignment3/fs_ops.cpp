@@ -123,16 +123,22 @@ void Disk::put(std::string name){
         return throw std::runtime_error{"Error reading file."};
 
     FS::Entry file = {"", (int)file_stat.st_ino};
+    bool found;
+
     for(auto i{0}; i < name.length(); i++)
         file.name[i] = name.at(i);
-    for(auto i{0}; i < entry_table.size() + 1; i++){
+    for(auto e : entry_table){
+        if(found = (e.inode == file.inode))
+            break;
+    }
+    for(auto i{0}; i <= entry_table.size(); i++){
         if(i == entry_table.size())
             return throw std::runtime_error{"Ran out of reserved file spaces."};
         if(!entry_table[i].name[0]){
             entry_table[i] = file;
             break;
         }
-    }
+    }   if(found) return;
     //  Put in DABPT
     auto time = gmtime(&file_stat.st_mtime);
     auto pw = getpwuid(file_stat.st_uid);
@@ -185,6 +191,7 @@ void Disk::put(std::string name){
             break;
         }
     }
+    int c = 0;
 }
 bool FSManage::get(std::string name){
     try{    current -> get(name);}
@@ -215,12 +222,14 @@ void Disk::get(std::string name){
     auto byte{0};
     do{
         auto i{0};
-        std::cout << "SECTOR: " << bp.sector << std::endl;
+        //std::cout << "SECTOR: " << bp.sector << std::endl;
         while(i < FS::BLOCK_SIZE && (byte++) < it2 -> size)
             file.write((char*)&blocks[bp.sector].data[i++], sizeof(char));
-        if(bp.next != -1)
-            bp = block_pointer_table[bp.next];
-    } while (bp.next != -1);
+        
+        if(bp.next == -1)
+            break;
+        bp = block_pointer_table[bp.next];
+    } while (true);
 }
 bool FSManage::list_fs(){
     try{    current -> list();}
