@@ -204,25 +204,25 @@ bool FSManage::get(std::string name){
 void Disk::get(std::string name){
     if(!entry_table.size())
         return throw std::runtime_error{"No disk opened. Open or create a new disk."};
-
-    auto it1 = std::find_if(entry_table.begin(), entry_table.end(),  //  Find entry in table
+    //  Find entry in table
+    auto it1 = std::find_if(entry_table.begin(), entry_table.end(),  
     [name](const FS::Entry& e){
         return !std::strcmp(e.name, name.c_str());
     });
-
-    if(it1 == entry_table.end())             // If it's not in the table
+    // If it's not in the table
+    if(it1 == entry_table.end())
         return throw std::runtime_error{"The file you've given is not on the disk."};
-    auto it2 = std::find_if(meta.begin(), meta.end(),        //  Find the corresponding meta info
+    //  Find the corresponding meta info
+    auto it2 = std::find_if(meta.begin(), meta.end(),        
     [it1](const FS::DiskAttribute& e){
         return it1 -> inode == e.inode;
     });
-
+    //  Start writing data to file
     FS::BlockPointer bp = block_pointer_table[it2 -> bp];
-    auto file = std::ofstream{name, std::ios::binary};  //  Start writing to file
+    auto file = std::ofstream{name, std::ios::binary};  
     auto byte{0};
     do{
         auto i{0};
-        //std::cout << "SECTOR: " << bp.sector << std::endl;
         while(i < FS::BLOCK_SIZE && (byte++) < it2 -> size)
             file.write((char*)&blocks[bp.sector].data[i++], sizeof(char));
         
@@ -230,6 +230,7 @@ void Disk::get(std::string name){
             break;
         bp = block_pointer_table[bp.next];
     } while (true);
+    file.close();
 }
 bool FSManage::list_fs(){
     try{    current -> list();}
@@ -257,4 +258,53 @@ void Disk::list(){
             //std::cout << std::endl;
         }
     }
+}
+bool FSManage::remove(std::string name){
+    try{    current -> remove(name);}
+    catch(const std::exception& e){
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+void Disk::remove(std::string name){
+    if(!entry_table.size())
+        return throw std::runtime_error{"No disk opened. Open or create a new disk."};
+    //  Find entry in table
+    auto it1 = std::find_if(entry_table.begin(), entry_table.end(),
+    [name](const FS::Entry& e){
+        return !std::strcmp(e.name, name.c_str());
+    });
+    //  If multiple files share same inode, only remove the selected entry
+    auto c = std::count_if(entry_table.begin(), entry_table.end(),
+    [it1](const FS::Entry& e){
+        return it1 -> inode == e.inode;
+    });
+    if(c > 1){
+        *it1 = *(new FS::Entry{});
+        return;    
+    }
+    // If it's not in the table
+    if(it1 == entry_table.end())             
+        return throw std::runtime_error{"The file you've given is not on the disk."};
+    //  Find the corresponding meta info
+    auto it2 = std::find_if(meta.begin(), meta.end(),        
+    [it1](const FS::DiskAttribute& e){
+        return it1 -> inode == e.inode;
+    });
+    //  Remove corresponding data blocks
+    FS::BlockPointer bp = block_pointer_table[it2 -> bp];
+    auto curr{it2 -> bp};
+    do{
+        free_space[bp.sector] = *(new bool{false});
+        blocks[bp.sector] = *(new FS::DataBlock{});
+        block_pointer_table[curr] = *(new FS::BlockPointer{});
+        if(bp.next == -1)
+            break;
+        curr = bp.next;
+        bp = block_pointer_table[curr];
+    } while (true);
+    //  Remove Entry and Meta info
+    *it1 = *(new FS::Entry{});
+    *it2 = *(new FS::DiskAttribute{});
 }

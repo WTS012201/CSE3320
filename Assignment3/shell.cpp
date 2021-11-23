@@ -20,8 +20,10 @@ int main(int argv, char* argsv[]){
                 std::cin >> names >> entries;
                 fs -> format_fs(names, entries);
                 break;
-            case 'F':
-                
+            case 'R':
+                std::cout << "Enter name of file: ";
+                std::cin >> selection;
+                fs -> remove(selection);
                 break;
             case 'P':
                 std::cout << "Enter name of file: ";
