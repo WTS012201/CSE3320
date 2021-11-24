@@ -332,3 +332,23 @@ void Disk::remove(std::string name){
     *it1 = *(new FS::Entry{});
     *it2 = *(new FS::DiskAttribute{});
 }
+bool FSManage::rename(std::string old_file_name, std::string new_file_name){
+    try{    current -> rename(old_file_name, new_file_name);}
+    catch(const std::exception& e){
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+void Disk::rename(std::string old_file_name, std::string new_file_name){
+    auto it1 = std::find_if(entry_table.begin(), entry_table.end(),
+    [old_file_name](const FS::Entry& e){
+        return !std::strcmp(e.name, old_file_name.c_str());
+    });
+    if(it1 == entry_table.end())             
+        return throw std::runtime_error{"The file you've given is not on the disk."};
+    FS::Entry e{"", it1 -> inode};
+    for(auto i{0}; i < new_file_name.size(); i++)
+        e.name[i] = new_file_name[i];
+    *it1 = e;
+}

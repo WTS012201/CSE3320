@@ -65,6 +65,7 @@ class Disk{
         void get(std::string name);
         void save(std::string name);
         void open(std::string name);
+        void rename(std::string old_file_name, std::string new_file_name);
         void list();
         void user();
         void link();
@@ -86,6 +87,7 @@ class FSManage{ //  For debugging
         bool list_fs();
         bool remove(std::string file_name);
         bool rename(std::string old_file_name, std::string new_file_name);
+        bool user(std::string name);
         bool put(std::string name); //  puts file on virtual disk
         bool get(std::string name);  // gets file on virtual disk
 };
