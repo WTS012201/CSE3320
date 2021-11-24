@@ -117,7 +117,28 @@ void Disk::put(std::string name){
     auto temp = new char{FS::ENTRY_MAX};   strcpy(temp, name.c_str());
     struct stat file_stat;
     const char* c_temp = temp;
+    //  Check if there is more than one entry in the table.
+    auto f = std::count_if(entry_table.begin(), entry_table.end(),
+    [temp](const FS::Entry& e){
+        return !std::strcmp(e.name, temp);
+    });
+    //  If more than one entry, prompt user to continue.
+    while(f > 0){
+        std::string selection;
+        std::cout << "This file name is already on the disk.\n";
+        std::cout << "Continue(Y/N)? ";
+        std::cin >> selection; 
 
+        if(selection.size() > 1){
+            std::cout << "Invalid selection!\n";
+            continue;
+        } else if(std::toupper(selection[0]) == 'N')
+            return;
+        else if(std::toupper(selection[0]) == 'Y')
+            break;
+        else
+            std::cout << "Invalid selection!\n";
+    }
     // Put in FNT
     if(fstat(::open(c_temp, std::ios::in), &file_stat) < 0)
         return throw std::runtime_error{"Error reading file."};
@@ -275,6 +296,9 @@ void Disk::remove(std::string name){
     [name](const FS::Entry& e){
         return !std::strcmp(e.name, name.c_str());
     });
+    // If it's not in the table
+    if(it1 == entry_table.end())
+        return throw std::runtime_error{"The file you've given is not on the disk."};
     //  If multiple files share same inode, only remove the selected entry
     auto c = std::count_if(entry_table.begin(), entry_table.end(),
     [it1](const FS::Entry& e){

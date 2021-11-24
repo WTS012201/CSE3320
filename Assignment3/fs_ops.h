@@ -66,6 +66,8 @@ class Disk{
         void save(std::string name);
         void open(std::string name);
         void list();
+        void user();
+        void link();
         void remove(std::string name);
         template<typename T, typename F>
             void manage_data(std::vector<T>& obj, F expr, int size = 0);
