@@ -70,8 +70,12 @@ int main(){
                 fs -> get(selection);
                 break;
             case 9:
+                std::cin >> selection;
+                fs -> user(selection);
                 break;
             case 10:
+                std::cin >> selection;
+                //fs -> link(selection);
                 break;
             case 11:
                 exit(EXIT_SUCCESS);
@@ -93,8 +97,6 @@ int main(){
             default:
                 std::cout << "Invalid Selection!\n";
                 break;
-            
-            
         }
     }
     return EXIT_SUCCESS;

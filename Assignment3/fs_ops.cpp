@@ -159,7 +159,7 @@ void Disk::put(std::string name){
             entry_table[i] = file;
             break;
         }
-    }   if(found) return;
+    } if(found) return;
     //  Put in DABPT
     auto time = gmtime(&file_stat.st_mtime);
     auto pw = getpwuid(file_stat.st_uid);
@@ -351,4 +351,67 @@ void Disk::rename(std::string old_file_name, std::string new_file_name){
     for(auto i{0}; i < new_file_name.size(); i++)
         e.name[i] = new_file_name[i];
     *it1 = e;
+}
+bool FSManage::user(std::string name){
+    try{    current -> user(name);}
+    catch(const std::exception& e){
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+void Disk::user(std::string file_name){
+    auto it1 = std::find_if(entry_table.begin(), entry_table.end(),
+    [file_name](const FS::Entry& e){
+        return !std::strcmp(e.name, file_name.c_str());
+    });
+    if(it1 == entry_table.end())             
+        return throw std::runtime_error{"The file you've given is not on the disk."};
+    auto it2 = std::find_if(meta.begin(), meta.end(),        
+    [it1](const FS::DiskAttribute& e){
+        return it1 -> inode == e.inode;
+    });
+    std::cout << it2 -> user << " owns " << file_name << std::endl;
+    std::cout << "Would you like to change who owns this file(Y/N)? ";
+
+    while(true){
+        std::string selection;
+        std::cin >> selection; 
+        if(selection.size() > 1){
+            std::cout << "Invalid selection!\n";
+            continue;
+        } else if(std::toupper(selection[0]) == 'N')
+            return;
+        else if(std::toupper(selection[0]) == 'Y')
+            break;
+        else
+            std::cout << "Invalid selection!\n";
+    }
+    std::string new_name;
+    std::cout << "Enter the user: ";
+    std::cin >> new_name;
+    
+    for(auto i{0}; i < new_name.size() &&
+    i < FS::BLOCK_SIZE/4 - sizeof(int)*4; i++)
+        it2 -> user[i] = new_name[i];
+}
+void Disk::update(int inode){
+    auto it = std::find_if(meta.begin(), meta.end(),
+    [inode](const FS::DiskAttribute& e){
+        return inode == e.inode;
+    });
+    //  Remove corresponding data blocks
+    FS::BlockPointer bp = block_pointer_table[it -> bp];
+    auto curr{it -> bp};
+    do{
+        free_space[bp.sector] = *(new bool{false});
+        blocks[bp.sector] = *(new FS::DataBlock{});
+        block_pointer_table[curr] = *(new FS::BlockPointer{});
+        if(bp.next == -1)
+            break;
+        curr = bp.next;
+        bp = block_pointer_table[curr];
+    } while (true);
+    //  Remove meta info
+    *it = *(new FS::DiskAttribute{});
 }

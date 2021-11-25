@@ -68,8 +68,9 @@ class Disk{
         void open(std::string name);
         void rename(std::string old_file_name, std::string new_file_name);
         void list();
-        void user();
+        void user(std::string name);
         void link();
+        void update(int inode);
         void remove(std::string name);
         template<typename T, typename F>
             void manage_data(std::vector<T>& obj, F expr, int size = 0);
@@ -89,6 +90,7 @@ class FSManage{ //  For debugging
         bool remove(std::string file_name);
         bool rename(std::string old_file_name, std::string new_file_name);
         bool user(std::string name);
+        bool link(std::string name);
         bool put(std::string name); //  puts file on virtual disk
         bool get(std::string name);  // gets file on virtual disk
 };
