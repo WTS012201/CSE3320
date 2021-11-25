@@ -390,10 +390,12 @@ void Disk::user(std::string file_name){
     std::string new_name;
     std::cout << "Enter the user: ";
     std::cin >> new_name;
-    
-    for(auto i{0}; i < new_name.size() &&
-    i < FS::BLOCK_SIZE/4 - sizeof(int)*4; i++)
+
+    auto i{0};
+    for(; i < new_name.size() &&
+    i < (FS::BLOCK_SIZE/4 - sizeof(int)*4 - 1); i++)
         it2 -> user[i] = new_name[i];
+    it2 -> user[i] = '\0';
 }
 void Disk::update(int inode){
     auto it = std::find_if(meta.begin(), meta.end(),
