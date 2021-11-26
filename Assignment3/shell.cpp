@@ -5,15 +5,14 @@ static std::unordered_map<std::string, int> inputs{{
     {"F", 1},
     {"S", 2},
     {"O", 3},
-    {"LI", 4},
+    {"LS", 4},
     {"RM", 5},
     {"RN", 6},
     {"P", 7},
     {"G", 8},
     {"U", 9},
-    {"LK", 10},
-    {"Q", 11},
-    {"H", 12},
+    {"Q", 10},
+    {"H", 11},
 }};
 
 int main(){
@@ -74,24 +73,19 @@ int main(){
                 fs -> user(selection);
                 break;
             case 10:
-                std::cin >> selection;
-                //fs -> link(selection);
-                break;
-            case 11:
                 exit(EXIT_SUCCESS);
                 break;
-            case 12:
+            case 11:
                 std::cout << "C: Createfs #ofblocks\n";
                 std::cout << "F: Formatfs #filenames #DABPTentries\n";
                 std::cout << "S: Savefs name– save the “disk” image in a file “name”\n";
                 std::cout << "O: Openfs name- use an existing disk image\n";
-                std::cout << "Li: List – list files (and other meta-information) in a FS\n";
+                std::cout << "Ls: List – list files (and other meta-information) in a FS\n";
                 std::cout << "Rm: Remove name –remove named file from fs\n";
                 std::cout << "Rn: Rename oldname newname – rename a file stored in the FS\n";
                 std::cout << "P: Put ExternalFile – put (store) Host OS file into the disk\n";
                 std::cout << "G: Get ExternalFile – get disk file, copy from “disk” to host OS file system\n";
                 std::cout << "U: User name – show/change name of user who owns this file\n";
-                std::cout << "Lk: Link/Unlink – Unix style file linking\n";
                 std::cout << "Q: Quit\n";
                 break;
             default:

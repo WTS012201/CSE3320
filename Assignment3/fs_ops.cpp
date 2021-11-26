@@ -126,16 +126,17 @@ void Disk::put(std::string name){
     while(f > 0){
         std::string selection;
         std::cout << "This file name is already on the disk.\n";
-        std::cout << "Continue(Y/N)? ";
+        std::cout << "Replace(Y/N)? ";
         std::cin >> selection; 
-
         if(selection.size() > 1){
             std::cout << "Invalid selection!\n";
             continue;
         } else if(std::toupper(selection[0]) == 'N')
             return;
-        else if(std::toupper(selection[0]) == 'Y')
+        else if(std::toupper(selection[0]) == 'Y'){
+            remove(name);
             break;
+        }
         else
             std::cout << "Invalid selection!\n";
     }
@@ -252,6 +253,27 @@ void Disk::get(std::string name){
         bp = block_pointer_table[bp.next];
     } while (true);
     file.close();
+    
+    uid_t          uid;
+    gid_t          gid;
+    struct passwd *pwd;
+    struct group  *grp;
+    
+    pwd = getpwnam(it2 -> user);
+    
+    if (pwd == NULL) {
+        return throw std::runtime_error{"Failed to get uid!"};
+    }
+    uid = pwd->pw_uid;
+    grp = getgrnam(it2 -> user);
+    if (grp == NULL) {
+        return throw std::runtime_error{"Failed to get gid!"};
+    }
+    gid = grp->gr_gid;
+    
+    if (chown(name.c_str(), uid, gid) == -1) {
+        return throw std::runtime_error{"Changing ownership failed!"};
+    }
 }
 bool FSManage::list_fs(){
     try{    current -> list();}
@@ -396,24 +418,4 @@ void Disk::user(std::string file_name){
     i < (FS::BLOCK_SIZE/4 - sizeof(int)*4 - 1); i++)
         it2 -> user[i] = new_name[i];
     it2 -> user[i] = '\0';
-}
-void Disk::update(int inode){
-    auto it = std::find_if(meta.begin(), meta.end(),
-    [inode](const FS::DiskAttribute& e){
-        return inode == e.inode;
-    });
-    //  Remove corresponding data blocks
-    FS::BlockPointer bp = block_pointer_table[it -> bp];
-    auto curr{it -> bp};
-    do{
-        free_space[bp.sector] = *(new bool{false});
-        blocks[bp.sector] = *(new FS::DataBlock{});
-        block_pointer_table[curr] = *(new FS::BlockPointer{});
-        if(bp.next == -1)
-            break;
-        curr = bp.next;
-        bp = block_pointer_table[curr];
-    } while (true);
-    //  Remove meta info
-    *it = *(new FS::DiskAttribute{});
 }

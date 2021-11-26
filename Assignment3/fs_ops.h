@@ -10,9 +10,11 @@
 #include <unordered_map>
 
 #include <sys/stat.h>
+#include <sys/types.h> 
+#include <unistd.h>
 #include <fcntl.h>  
 #include <pwd.h>
-#include <grp.h>   
+#include <grp.h>  
 #include <typeinfo>     
 
 namespace FS{
@@ -69,7 +71,6 @@ class Disk{
         void rename(std::string old_file_name, std::string new_file_name);
         void list();
         void user(std::string name);
-        void link();
         void update(int inode);
         void remove(std::string name);
         template<typename T, typename F>
@@ -90,7 +91,6 @@ class FSManage{ //  For debugging
         bool remove(std::string file_name);
         bool rename(std::string old_file_name, std::string new_file_name);
         bool user(std::string name);
-        bool link(std::string name);
         bool put(std::string name); //  puts file on virtual disk
         bool get(std::string name);  // gets file on virtual disk
 };
