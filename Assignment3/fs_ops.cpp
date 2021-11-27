@@ -1,3 +1,6 @@
+//  Name: William Sigala
+//  CSE 3320
+//  Assignment 3
 #include "fs_ops.h"
 
 FSManage::FSManage() : current{new Disk{}}{}
@@ -223,7 +226,6 @@ void Disk::put(std::string name){
             break;
         }
     }
-    int c = 0;
 }
 bool FSManage::get(std::string name){
     try{    current -> get(name);}

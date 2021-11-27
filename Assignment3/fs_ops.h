@@ -1,3 +1,7 @@
+//  Name: William Sigala
+//  CSE 3320
+//  Assignment 3
+
 #ifndef __FS_OPS_H
 #define __FS_OPS_H
 

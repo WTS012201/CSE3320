@@ -1,3 +1,6 @@
+//  Name: William Sigala
+//  CSE 3320
+//  Assignment 3
 #include "fs_ops.h"
 
 static std::unordered_map<std::string, int> inputs{{
