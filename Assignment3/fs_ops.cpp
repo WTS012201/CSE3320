@@ -116,11 +116,13 @@ void Disk::put(std::string name){
     auto temp = new char{FS::ENTRY_MAX};   strcpy(temp, name.c_str());
     struct stat file_stat;
     const char* c_temp = temp;
+
     //  Check if there is more than one entry in the table.
     auto f = std::count_if(entry_table.begin(), entry_table.end(),
     [temp](const FS::Entry& e){
         return !std::strcmp(e.name, temp);
     });
+    
     //  If more than one entry, prompt user to continue.
     while(f > 0){
         std::string selection;
@@ -139,10 +141,19 @@ void Disk::put(std::string name){
         else
             std::cout << "Invalid selection!\n";
     }
-    // Put in FNT
     if(fstat(::open(c_temp, std::ios::in), &file_stat) < 0)
         return throw std::runtime_error{"Error reading file."};
 
+    //  Check if enough space is available.
+    auto time = gmtime(&file_stat.st_mtime);
+    auto pw = getpwuid(file_stat.st_uid);
+
+    auto space = std::count_if(free_space.begin(), free_space.end(),
+    [](const bool& b){
+        return !b;
+    });
+
+    // Put in FNT
     FS::Entry file = {"", (int)file_stat.st_ino};
     bool found;
 
@@ -152,6 +163,8 @@ void Disk::put(std::string name){
         if(found = (e.inode == file.inode))
             break;
     }
+    if((space*FS::BLOCK_SIZE < file_stat.st_size) && !found)
+        return throw std::runtime_error{"Not enough space on the disk!"};
     for(auto i{0}; i <= entry_table.size(); i++){
         if(i == entry_table.size())
             return throw std::runtime_error{"Ran out of reserved file spaces!"};
@@ -161,15 +174,7 @@ void Disk::put(std::string name){
         }
     } if(found) return;
     //  Put in DABPT
-    auto time = gmtime(&file_stat.st_mtime);
-    auto pw = getpwuid(file_stat.st_uid);
-
-    auto space = std::count_if(free_space.begin(), free_space.end(),
-    [](const bool& b){
-        return !b;
-    });
-    if(space*FS::BLOCK_SIZE < file_stat.st_size)
-        return throw std::runtime_error{"Not enough space on the disk!"};
+    
     FS::DiskAttribute DA{
         "",
         (int)file_stat.st_size,
@@ -208,11 +213,11 @@ void Disk::put(std::string name){
             }
         }
         if(curr == free_space.size())
-            return throw std::runtime_error{"Not enough space available."};           
+            return throw std::runtime_error{"Not enough space available!"};           
     }
     for(auto i{0}; i < meta.size() + 1; i++){
         if(i == meta.size())
-            return throw std::runtime_error{"Ran out of reserved file spaces."};
+            return throw std::runtime_error{"Ran out of reserved file spaces!"};
         if(!meta[i].user[0]){
             meta[i] = DA;
             break;
