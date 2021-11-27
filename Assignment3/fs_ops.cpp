@@ -6,12 +6,11 @@ bool FSManage::create_fs(int num_blocks){
     return EXIT_SUCCESS;
 }
 Disk::Disk(){};
-Disk::Disk(int __num_blocks) : num_blocks{__num_blocks},
-    offset{0}{
+Disk::Disk(int __num_blocks) : num_blocks{__num_blocks}{
         manage_data(free_space, [](bool o){ o = false;}, __num_blocks);
         manage_data(blocks, [](FS::DataBlock){}, __num_blocks);
         manage_data(block_pointer_table, [](FS::BlockPointer){}, __num_blocks);
-    };
+};
 bool FSManage::format_fs(int file_names, int DABPT_entries){
     try{    current -> format(file_names, DABPT_entries);}
     catch(const std::exception& e){
@@ -155,7 +154,7 @@ void Disk::put(std::string name){
     }
     for(auto i{0}; i <= entry_table.size(); i++){
         if(i == entry_table.size())
-            return throw std::runtime_error{"Ran out of reserved file spaces."};
+            return throw std::runtime_error{"Ran out of reserved file spaces!"};
         if(!entry_table[i].name[0]){
             entry_table[i] = file;
             break;
@@ -164,7 +163,13 @@ void Disk::put(std::string name){
     //  Put in DABPT
     auto time = gmtime(&file_stat.st_mtime);
     auto pw = getpwuid(file_stat.st_uid);
-    
+
+    auto space = std::count_if(free_space.begin(), free_space.end(),
+    [](const bool& b){
+        return !b;
+    });
+    if(space*FS::BLOCK_SIZE < file_stat.st_size)
+        return throw std::runtime_error{"Not enough space on the disk!"};
     FS::DiskAttribute DA{
         "",
         (int)file_stat.st_size,
@@ -262,7 +267,7 @@ void Disk::get(std::string name){
     pwd = getpwnam(it2 -> user);
     
     if (pwd == NULL) {
-        return throw std::runtime_error{"Failed to get uid!"};
+        return throw std::runtime_error{"Failed to get uid! Try changing the user who owns this file."};
     }
     uid = pwd->pw_uid;
     grp = getgrnam(it2 -> user);

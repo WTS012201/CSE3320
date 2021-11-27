@@ -21,6 +21,7 @@ int main(){
     std::cout << "Enter H for help\n\n";
     while(true){
         std::string arg1, arg2;
+        int a, b;
         std::cout << ">> ";
         std::cin >> selection;
         std::transform(selection.begin(), selection.end(), selection.begin(), ::toupper);
@@ -31,15 +32,16 @@ int main(){
         }
         switch(inputs[selection]){
             case 0:
-                std::cin >> selection;
-                fs -> create_fs(std::stoi(selection));
+                std::cin >> a;
+                fs -> create_fs(a);
                 std::cout << "FormatFS #filenames #DABPTEntries: ";
-                std::cin >> arg1 >> arg2;
-                fs -> format_fs(std::stoi(arg1), std::stoi(arg2));
+                std::cin >> a >> b;
+                
+                fs -> format_fs(a, b);
                 break;
             case 1:
-                std::cin >> arg1 >> arg2;
-                fs -> format_fs(std::stoi(arg1), std::stoi(arg2));
+                std::cin >> a >> b;
+                fs -> format_fs(a, b);
                 break;
             case 2:
                 std::cin >> selection;

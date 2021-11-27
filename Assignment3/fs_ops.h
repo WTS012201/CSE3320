@@ -33,7 +33,7 @@ namespace FS{
     } BlockPointer;
 
     typedef struct DiskAttribute{  //  4 per block
-        char user[BLOCK_SIZE/4 - sizeof(int)*4];
+        char user[BLOCK_SIZE/DA_PER_BLOCK - sizeof(int)*4];
         int size, time, inode, bp;
     } DiskAttribute;
 
@@ -58,7 +58,6 @@ class Disk{
         int num_blocks;
         int num_file_names;
         int num_DABPT_entries;
-        int offset;
         
     public:
         Disk();
