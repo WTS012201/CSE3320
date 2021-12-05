@@ -38,7 +38,6 @@ while True:
         inp = input("File: ")
         file_c.decrypt(inp)
     elif inp.upper() == "Q":
-        inp = input("File: ")
-        file_c.decrypt(inp)
+        break
     else:
         print("Invalid Input!")
