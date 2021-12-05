@@ -10,17 +10,9 @@ class file_crypt:
         while len(data)%16 != 0:
             data = data + b" "
         return data
-    def read(self, file):
-        with open(file, 'rb') as f:
-            orig_file = f.read()
-        return orig_file
-    def write(self, file, data):
-        with open(file, 'wb') as e:
-            e.write(data)
-    def encrypt(self, file_name):
+    def encrypt(self, file_data):
         cipher = AES.new(self.key, self.format, self.pad(self.IV))
-        orig_file = self.pad(self.read(file_name))
-        return cipher.encrypt(orig_file)
+        return cipher.encrypt(self.pad(file_data))
     def decrypt(self, file_data):
         decipher = AES.new(self.key, self.format, self.pad(self.IV))
         return decipher.decrypt(file_data)

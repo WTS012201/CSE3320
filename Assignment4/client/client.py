@@ -12,20 +12,18 @@ FORMAT = 'utf-8'
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
-crypt = file_crypt("password", "IV123", FORMAT)
-
-def send(data):
+def send_action(data):
     data = data.encode(FORMAT)
     send_len = str(len(data)).encode(FORMAT)
     send_len += b' ' * (BUFFER - len(send_len))
     client.send(send_len)
     client.send(data)
-def send_file(data):
+def send_data(data):
     send_len = str(len(data)).encode(FORMAT)
     send_len += b' ' * (BUFFER - len(send_len))
     client.send(send_len)
     client.send(data)
-def receive_file(file):
+def receive_data(file):
     data_len = client.recv(BUFFER).decode(FORMAT)  #   determine size of file name
     if data_len:
         data_len = int(data_len)
@@ -37,24 +35,31 @@ def receive_file(file):
     with open(file, 'wb') as f:
         f.write(decrypted_data)
 
+
+key = input("Enter a key for encryption: ")
+crypt = file_crypt(key, "IV123", FORMAT)
 print("Enter Q to quit session: ")
 while True:
     inp = input("Send/Receive(S/R): ")
     if inp.upper() == "S":
         inp = input("File: ")
         if path.exists(inp):
-            send("!STORE_FILE!")
-            send(inp)
-            send_file(crypt.encrypt(inp))
+            send_action("!STORE_FILE!")
+            with open(inp, 'rb') as f:
+                file_data = f.read()
+            send_data(crypt.encrypt(inp.encode(FORMAT)))
+            send_data(crypt.encrypt(file_data))
+            print("Sent Successfully")
         else:
             print("Not a file!")
     elif inp.upper() == "R":
         inp = input("File: ")
-        send("!GET_FILE!")
-        send(inp)
-        receive_file(inp)
+        send_action("!GET_FILE!")
+        send_data(crypt.encrypt(inp.encode(FORMAT)))
+        receive_data(inp)
+        print("Received Successfully")
     elif inp.upper() == "Q":
-        send("!DISCONNECT!")
+        send_action("!DISCONNECT!")
         break
     else:
         print("Invalid Input!")
