@@ -31,12 +31,13 @@ file_c = file_crypt("password", "IV123", "utf-8")
 
 while True:
     inp = input("Encrypt/Decrypt(E/D): ")
-    if len(inp) > 1:
-        print("Invalid Input!")
-    elif inp[0].upper() == "E":
+    if inp.upper() == "E":
         inp = input("File: ")
         file_c.encrypt(inp)
-    elif inp[0].upper() == "D":
+    elif inp.upper() == "D":
+        inp = input("File: ")
+        file_c.decrypt(inp)
+    elif inp.upper() == "Q":
         inp = input("File: ")
         file_c.decrypt(inp)
     else:
