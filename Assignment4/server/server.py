@@ -29,6 +29,7 @@ def get_file(conn, addr):
     else:
         conn.send(("-1").encode(FORMAT))
         print("File not on server. Aborting!")
+    print(f"Sent {file_name} Successfully")
 def store_file(conn, addr):
     data_len = conn.recv(BUFFER).decode(FORMAT)  #   determine size of file name
     if data_len:
@@ -41,7 +42,7 @@ def store_file(conn, addr):
         data = conn.recv(data_len)
         with open(file_name, 'wb') as f:
             f.write(data)
-        conn.send((f"File {file_name} received").encode(FORMAT))
+        print(f"Received {file_name} Successfully")
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     connected = True

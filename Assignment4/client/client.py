@@ -16,14 +16,12 @@ crypt = file_crypt("password", "IV123", FORMAT)
 
 def send(data):
     data = data.encode(FORMAT)
-    data_len = len(data)
-    send_len = str(data_len).encode(FORMAT)
+    send_len = str(len(data)).encode(FORMAT)
     send_len += b' ' * (BUFFER - len(send_len))
     client.send(send_len)
     client.send(data)
 def send_file(data):
-    data_len = len(data)
-    send_len = str(data_len).encode(FORMAT)
+    send_len = str(len(data)).encode(FORMAT)
     send_len += b' ' * (BUFFER - len(send_len))
     client.send(send_len)
     client.send(data)
@@ -32,7 +30,7 @@ def receive_file(file):
     if data_len:
         data_len = int(data_len)
         if data_len == -1:
-            print(f"{file} is not on the server")
+            print(f"{file} is not on the server!")
             return
         file_data = client.recv(data_len)
     decrypted_data = crypt.decrypt(file_data)
@@ -48,7 +46,6 @@ while True:
             send("!STORE_FILE!")
             send(inp)
             send_file(crypt.encrypt(inp))
-            print(client.recv(2048).decode(FORMAT))
         else:
             print("Not a file!")
     elif inp.upper() == "R":
