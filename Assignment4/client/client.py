@@ -4,6 +4,7 @@ import os
 from os import path
 
 BUFFER = 64
+STREAM_BUFF = 10240
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 9090
 ADDR = (HOST, PORT)
@@ -22,7 +23,14 @@ def send_data(data):
     send_len = str(len(data)).encode(FORMAT)
     send_len += b' ' * (BUFFER - len(send_len))
     client.send(send_len)
-    client.send(data)
+
+    f_data_stream = bytes()
+    for i in range(0, len(data) - STREAM_BUFF, STREAM_BUFF):
+        f_data_stream = data[i : i + STREAM_BUFF]
+        client.send(f_data_stream)
+    start = int(len(data)/STREAM_BUFF)*STREAM_BUFF 
+    f_data_stream = data[start : len(data)]
+    client.send(f_data_stream)
 def receive_data(file):
     data_len = client.recv(BUFFER).decode(FORMAT)  #   determine size of file name
     if data_len:
@@ -30,11 +38,17 @@ def receive_data(file):
         if data_len == -1:
             print(f"{file} is not on the server!")
             return
-        file_data = client.recv(data_len)
-    decrypted_data = crypt.decrypt(file_data)
+        data = bytes()
+        for i in range(0, data_len - STREAM_BUFF, STREAM_BUFF):
+            data += client.recv(STREAM_BUFF)
+        start = int(data_len%STREAM_BUFF)
+        data += client.recv(start)
+        with open(file, 'wb') as f:
+            f.write(data)
+    decrypted_data = crypt.decrypt(data)
     with open(file, 'wb') as f:
         f.write(decrypted_data)
-
+    print("Received Successfully")
 
 key = input("Enter a key for encryption: ")
 crypt = file_crypt(key, "IV123", FORMAT)
@@ -45,7 +59,7 @@ while True:
         inp = input("File: ")
         if path.exists(inp):
             send_action("!STORE_FILE!")
-            with open(inp, 'rb') as f:
+            with open(inp, "rb") as f:
                 file_data = f.read()
             send_data(crypt.encrypt(inp.encode(FORMAT)))
             send_data(crypt.encrypt(file_data))
@@ -57,7 +71,6 @@ while True:
         send_action("!GET_FILE!")
         send_data(crypt.encrypt(inp.encode(FORMAT)))
         receive_data(inp)
-        print("Received Successfully")
     elif inp.upper() == "Q":
         send_action("!DISCONNECT!")
         break
