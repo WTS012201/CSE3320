@@ -1,5 +1,7 @@
 import socket
-from encryption import file_crypt
+from Crypto.Cipher import AES
+import hashlib
+
 import os
 from os import path
 
@@ -12,6 +14,23 @@ FORMAT = 'utf-8'
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
+
+# pip install pycryptodome
+class file_crypt:
+    def __init__(self, password, IV, FORMAT):
+        self.key = hashlib.sha256(password.encode(FORMAT)).digest()
+        self.IV = IV.encode(FORMAT)
+        self.format = AES.MODE_CBC
+    def pad(self, data):
+        while len(data)%16 != 0:
+            data = data + b" "
+        return data
+    def encrypt(self, file_data):
+        cipher = AES.new(self.key, self.format, self.pad(self.IV))
+        return cipher.encrypt(self.pad(file_data))
+    def decrypt(self, file_data):
+        decipher = AES.new(self.key, self.format, self.pad(self.IV))
+        return decipher.decrypt(self.pad(file_data)).rstrip()
 
 def send_action(data):
     data = data.encode(FORMAT)
