@@ -33,6 +33,7 @@ def send_data(data):
     client.send(f_data_stream)
 def receive_data(file):
     f_data = client.recv(BUFFER)
+    print(f"Data size: {f_data}")
     data_len = f_data.decode(FORMAT)  #   determine size of file name
     if data_len:
         data_len = int(data_len)

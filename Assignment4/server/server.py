@@ -20,6 +20,7 @@ def get_file(conn, addr):
         data_len = int(data_len)
         file_name = conn.recv(data_len)
         file_name = file_name.replace(b'/',b'')
+        file_name = file_name.replace(b'\\',b'')
         #file_name = str(file_name).replace('/', '').encode(FORMAT)
     if path.exists(file_name):
         with open(file_name, 'rb') as f:
@@ -46,6 +47,7 @@ def store_file(conn, addr):
         data_len = int(data_len)
         file_name = conn.recv(data_len)
         file_name = file_name.replace(b'/',b'')
+        file_name = file_name.replace(b'\\',b'')
         #file_name = str(file_name).replace('/', '').encode(FORMAT)
     data_len = conn.recv(BUFFER).decode(FORMAT)  #   determine size of data
     if data_len:
