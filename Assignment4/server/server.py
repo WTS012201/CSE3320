@@ -22,15 +22,17 @@ def get_file(conn, addr):
     if data_len:
         data_len = int(data_len)
         file_name = conn.recv(data_len)
+        #   Below reformats file name so it doesn't conflict with file pathing
         file_name = file_name.replace(b'/',b'')
+        file_name = file_name.replace(b'\0',b'')
         file_name = file_name.replace(b'\\',b'')
-        #file_name = str(file_name).replace('/', '').encode(FORMAT)
     if path.exists(file_name):
         with open(file_name, 'rb') as f:
             data = f.read()
         data_len = len(data)
         send_len = str(data_len).encode(FORMAT)
         send_len += b' ' * (BUFFER - len(send_len))
+        print(f"Data size: {send_len}")
         conn.send(send_len)
 
         f_data_stream = bytes()
@@ -49,9 +51,10 @@ def store_file(conn, addr):
     if data_len:
         data_len = int(data_len)
         file_name = conn.recv(data_len)
+        #   Below reformats file name so it doesn't conflict with file pathing
         file_name = file_name.replace(b'/',b'')
+        file_name = file_name.replace(b'\0',b'')
         file_name = file_name.replace(b'\\',b'')
-        #file_name = str(file_name).replace('/', '').encode(FORMAT)
     data_len = conn.recv(BUFFER).decode(FORMAT)  #   determine size of data
     if data_len:
         data_len = int(data_len)
