@@ -1,3 +1,6 @@
+#  Name: William Sigala
+#  CSE 3320
+#  Assignment 4
 import socket
 import threading
 import os
